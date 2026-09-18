@@ -4,7 +4,7 @@ Read `docs/project-specification.md` and `docs/phase-0-architecture.md` before c
 
 ## Scope and phase gates
 
-- Work through phases 0–16 in `docs/implementation-checklist.md`. Phases 0 and 1 are approved; complete only the currently authorized phase before moving to the next.
+- Work through phases 0–16 in `docs/implementation-checklist.md`. Phases 0–2 are approved; complete only the currently authorized phase before moving to the next.
 - At each phase boundary, inspect the diff, run relevant tests and lint, verify imports and startup where possible, fix failures, and record an honest checkpoint. Do not build later phases on a known broken foundation.
 - Prefer one well-tested implementation per capability. Do not add a dependency only to satisfy a technology checklist.
 

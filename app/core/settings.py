@@ -8,7 +8,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    """Configuration only; service connections are created in later phases."""
+    """Validated local service configuration."""
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore", frozen=True)
 
