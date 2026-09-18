@@ -1,0 +1,235 @@
+[
+  {
+    "query": "How many characters are required for a human password?",
+    "document": "Password and Authentication Policy",
+    "section": "1. Password requirements"
+  },
+  {
+    "query": "Can staff choose a long passphrase?",
+    "document": "Password and Authentication Policy",
+    "section": "1. Password requirements"
+  },
+  {
+    "query": "What should I do when my password is compromised?",
+    "document": "Password and Authentication Policy",
+    "section": "1. Password requirements"
+  },
+  {
+    "query": "Which sign-ins require a second factor?",
+    "document": "Password and Authentication Policy",
+    "section": "2. Multifactor authentication"
+  },
+  {
+    "query": "Are administrators expected to use security keys?",
+    "document": "Password and Authentication Policy",
+    "section": "2. Multifactor authentication"
+  },
+  {
+    "query": "When is SMS recovery permitted?",
+    "document": "Password and Authentication Policy",
+    "section": "2. Multifactor authentication"
+  },
+  {
+    "query": "How often must service account credentials rotate?",
+    "document": "Password and Authentication Policy",
+    "section": "3. Recovery and service credentials"
+  },
+  {
+    "query": "What happens after ten failed sign-ins?",
+    "document": "Password and Authentication Policy",
+    "section": "4. Failed sign-ins"
+  },
+  {
+    "query": "Who can approve access when a worker joins?",
+    "document": "Access Control Policy",
+    "section": "1. Joiner and leaver access"
+  },
+  {
+    "query": "How soon must a departing worker lose access?",
+    "document": "Access Control Policy",
+    "section": "1. Joiner and leaver access"
+  },
+  {
+    "query": "Must administrators have a separate account for elevation?",
+    "document": "Access Control Policy",
+    "section": "2. Privileged accounts"
+  },
+  {
+    "query": "How long can elevated access last and who approves it?",
+    "document": "Access Control Policy",
+    "section": "2. Privileged accounts"
+  },
+  {
+    "query": "How often are active entitlements reviewed?",
+    "document": "Access Control Policy",
+    "section": "3. Quarterly review"
+  },
+  {
+    "query": "When are emergency account logs reviewed?",
+    "document": "Access Control Policy",
+    "section": "4. Emergency access"
+  },
+  {
+    "query": "How quickly should a suspected incident be reported?",
+    "document": "Incident Response Policy",
+    "section": "1. Reporting and escalation"
+  },
+  {
+    "query": "Should I wait for certainty before notifying the incident hotline?",
+    "document": "Incident Response Policy",
+    "section": "1. Reporting and escalation"
+  },
+  {
+    "query": "What severity applies to confirmed Restricted-data exposure?",
+    "document": "Incident Response Policy",
+    "section": "2. Severity and containment"
+  },
+  {
+    "query": "How are repeated failed logins initially classified?",
+    "document": "Incident Response Policy",
+    "section": "2. Severity and containment"
+  },
+  {
+    "query": "What details accompany incident evidence custody?",
+    "document": "Incident Response Policy",
+    "section": "3. Evidence and communications"
+  },
+  {
+    "query": "When is the root-cause review due?",
+    "document": "Incident Response Policy",
+    "section": "4. Closure"
+  },
+  {
+    "query": "For how many days are daily backups kept?",
+    "document": "Backup and Recovery Policy",
+    "section": "1. Schedule and retention"
+  },
+  {
+    "query": "How long do monthly backup copies remain available?",
+    "document": "Backup and Recovery Policy",
+    "section": "1. Schedule and retention"
+  },
+  {
+    "query": "How frequently do operators test a restore?",
+    "document": "Backup and Recovery Policy",
+    "section": "2. Isolation and testing"
+  },
+  {
+    "query": "What are the ticket service RTO and RPO?",
+    "document": "Backup and Recovery Policy",
+    "section": "3. Recovery targets"
+  },
+  {
+    "query": "What suspends destruction of an expired backup?",
+    "document": "Backup and Recovery Policy",
+    "section": "4. Disposal"
+  },
+  {
+    "query": "Can I use my personal email for Restricted files?",
+    "document": "Acceptable Use Policy",
+    "section": "2. Software and information sharing"
+  },
+  {
+    "query": "Where may I install software from?",
+    "document": "Acceptable Use Policy",
+    "section": "2. Software and information sharing"
+  },
+  {
+    "query": "May Restricted data be pasted into an external generative service?",
+    "document": "Acceptable Use Policy",
+    "section": "4. Use of automation"
+  },
+  {
+    "query": "How must remote workers reach Internal services?",
+    "document": "Remote Access Policy",
+    "section": "1. Connection requirements"
+  },
+  {
+    "query": "Can a remote employee use public Wi-Fi?",
+    "document": "Remote Access Policy",
+    "section": "1. Connection requirements"
+  },
+  {
+    "query": "Is split tunneling allowed for Restricted services?",
+    "document": "Remote Access Policy",
+    "section": "2. Session safety"
+  },
+  {
+    "query": "When does a vendor remote account expire?",
+    "document": "Remote Access Policy",
+    "section": "3. Third-party access"
+  },
+  {
+    "query": "Who must be notified when a remote device is lost?",
+    "document": "Remote Access Policy",
+    "section": "4. Lost remote devices"
+  },
+  {
+    "query": "How soon must managed devices receive security patches?",
+    "document": "Information Security Policy",
+    "section": "3. Device safeguards"
+  },
+  {
+    "query": "What approval is needed for a policy exception?",
+    "document": "Information Security Policy",
+    "section": "4. Exceptions and review"
+  },
+  {
+    "query": "ما الحد الأدنى لطول كلمة المرور؟",
+    "document": "Password and Authentication Policy",
+    "section": "1. Password requirements",
+    "language": "ar"
+  },
+  {
+    "query": "متى يجب الإبلاغ عن حادث أمني مشتبه به؟",
+    "document": "Incident Response Policy",
+    "section": "1. Reporting and escalation",
+    "language": "ar"
+  },
+  {
+    "query": "كم مدة الاحتفاظ بالنسخ الاحتياطية اليومية؟",
+    "document": "Backup and Recovery Policy",
+    "section": "1. Schedule and retention",
+    "language": "ar"
+  },
+  {
+    "query": "هل الوصول عن بعد يتطلب شبكة خاصة افتراضية؟",
+    "document": "Remote Access Policy",
+    "section": "1. Connection requirements",
+    "language": "ar"
+  },
+  {
+    "query": "What is the maternity leave policy?",
+    "document": null
+  },
+  {
+    "query": "What are the cafeteria lunch prices?",
+    "document": null
+  },
+  {
+    "query": "When is the annual company picnic?",
+    "document": null
+  },
+  {
+    "query": "How do I submit a travel reimbursement?",
+    "document": null
+  },
+  {
+    "query": "What is the dental insurance deductible?",
+    "document": null
+  },
+  {
+    "query": "Who won the local football final?",
+    "document": null
+  },
+  {
+    "query": "ما هي سياسة إجازة الأمومة؟",
+    "document": null,
+    "language": "ar"
+  },
+  {
+    "query": "ما سعر وجبة الغداء في المقهى؟",
+    "document": null,
+    "language": "ar"
+  }
+]

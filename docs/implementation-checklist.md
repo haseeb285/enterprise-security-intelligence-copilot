@@ -5,7 +5,7 @@ At every phase boundary: inspect changes, run relevant tests and Ruff, verify im
 - [x] **0 — Environment and architecture:** inspect hardware, tools, disk, repository; choose architecture and resource strategy; save specification and persistent rules. See `phase-0-architecture.md`.
 - [x] **1 — Foundation:** initialize Git, package/settings, dependency pins, venv instructions, ignore rules, example environment, quality tooling, smoke checks.
 - [x] **2 — Database and synthetic data:** PostgreSQL schema/migrations, deterministic generator and seed CLI, filtered event/incident reads, DB tests.
-- [ ] **3 — RAG:** PDF/Markdown/TXT extraction, validation, chunking, deduplication, metadata, local embeddings, Qdrant upsert/retrieval, citations and relevance tests.
+- [x] **3 — RAG:** PDF/Markdown/TXT extraction, validation, chunking, deduplication, metadata, local embeddings, Qdrant upsert/retrieval, citations and relevance tests.
 - [ ] **4 — Local LLM:** provider interface, native Ollama adapter, configurable model, availability and timeout errors, mocked contract tests and local smoke test if available.
 - [ ] **5 — FastAPI:** versioned routes, schemas, validation, demo authentication/roles, safe errors, API tests and OpenAPI checks.
 - [ ] **6 — LangGraph agent:** typed state, selective evidence routing, approved tools, bounded graph, workflow/failure tests.
@@ -20,4 +20,4 @@ At every phase boundary: inspect changes, run relevant tests and Ruff, verify im
 - [ ] **15 — Documentation and demo:** README, requested topic docs, reproducible policy and investigation walkthrough, measured results and clear limitations.
 - [ ] **16 — Final audit:** verify implemented/used/tested/documented matrix, run available stack checks, inspect repository for secrets/private data, resolve critical failures.
 
-**Phase gate:** Phase 2 was approved and completed. Wait for the user's direction before starting Phase 3.
+**Phase gate:** Phase 3 was approved and completed. Wait for the user's direction before starting Phase 4.

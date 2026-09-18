@@ -4,7 +4,7 @@ Portfolio project for a **local, synthetic** security intelligence workflow. The
 
 ## Current status
 
-Phase 2 data layer is complete: PostgreSQL schema/migration, deterministic fictional telemetry, bounded event/incident queries, and a seed command. No API, RAG, ML, agent, or UI is implemented yet. See [the phased checklist](docs/implementation-checklist.md) and [architecture decision](docs/phase-0-architecture.md).
+Phase 3 local policy retrieval is complete: PostgreSQL and synthetic telemetry, plus seven fictional policies, local multilingual embeddings, Qdrant indexing, relevance-gated retrieval, and structured citations. No LLM, API, ML model, agent, or UI is implemented yet. See [the phased checklist](docs/implementation-checklist.md) and [RAG design and measurements](docs/rag.md).
 
 ## Local setup
 
@@ -30,9 +30,17 @@ docker compose ps
 .venv/bin/alembic check
 ```
 
-The Compose file runs only PostgreSQL and binds the configured host port to loopback. See [data model](docs/data-model.md) and [synthetic data](docs/synthetic-data.md) for schema, scenario, ground-truth, and reset details.
+For Phase 3, set `QDRANT_PORT=6333` in `.env`, then:
 
-`requirements-dev.lock` records the exact Phase 1 environment, including transitive packages. Refresh it deliberately after dependency changes. `pyproject.toml` lists the direct runtime and development dependencies.
+```bash
+docker compose up -d postgres qdrant
+.venv/bin/python -m app.rag.ingest data/policies/synthetic --prune
+.venv/bin/python -m app.rag.evaluate --threshold 0.805
+```
+
+Both services bind their host ports to loopback by default. See [data model](docs/data-model.md), [synthetic data](docs/synthetic-data.md), and [local RAG](docs/rag.md) for behavior and validation.
+
+`requirements-dev.lock` records the exact local Python environment, including transitive packages. Refresh it deliberately after dependency changes. `pyproject.toml` lists direct dependencies.
 
 ## Documentation
 
@@ -41,5 +49,7 @@ The Compose file runs only PostgreSQL and binds the configured host port to loop
 - [Implementation checklist](docs/implementation-checklist.md)
 - [Phase 2 data model](docs/data-model.md)
 - [Synthetic data methodology](docs/synthetic-data.md)
+- [Local policy retrieval](docs/rag.md)
+- [Phase 3 checkpoint](docs/phase-3-checkpoint.md)
 
 The full architecture, workflows, measured evaluation results, and demo instructions will be documented as the corresponding components are implemented and verified.
