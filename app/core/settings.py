@@ -2,8 +2,9 @@
 
 from functools import lru_cache
 from typing import Literal
+from urllib.parse import urlparse
 
-from pydantic import Field, HttpUrl, SecretStr
+from pydantic import Field, HttpUrl, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -30,8 +31,27 @@ class Settings(BaseSettings):
     rag_top_k: int = Field(default=5, ge=1, le=10)
     database_url: SecretStr | None = None
     demo_api_token: SecretStr | None = None
+    demo_read_token: SecretStr | None = None
+    cors_origins: list[str] = Field(default_factory=list)
     max_question_chars: int = Field(default=4000, ge=1, le=20000)
     request_timeout_seconds: int = Field(default=30, ge=1, le=120)
+
+    @field_validator("cors_origins")
+    @classmethod
+    def restricted_cors(cls, value: list[str]) -> list[str]:
+        for origin in value:
+            parsed = urlparse(origin)
+            if (
+                parsed.scheme not in {"http", "https"}
+                or not parsed.netloc
+                or parsed.path
+                or parsed.query
+                or parsed.fragment
+                or parsed.username
+                or parsed.password
+            ):
+                raise ValueError("CORS_ORIGINS must contain explicit HTTP(S) origins")
+        return value
 
 
 @lru_cache

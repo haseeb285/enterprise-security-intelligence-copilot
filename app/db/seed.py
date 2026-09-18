@@ -97,9 +97,11 @@ def seed_database(
                 SecurityEvent: previous.get(
                     "event_count", previous.get("normal_event_count", -1) + 65
                 ),
-                AuditLog: 1,
             }
-            if counts != expected:
+            if (
+                any(counts[model] != count for model, count in expected.items())
+                or counts[AuditLog] < 1
+            ):
                 raise RuntimeError("Seeded database has changed; refusing automatic replacement")
         if existing is not None and not reset:
             if (

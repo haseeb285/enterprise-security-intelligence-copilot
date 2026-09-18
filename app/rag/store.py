@@ -4,8 +4,10 @@ from qdrant_client import QdrantClient, models
 
 
 class VectorStore:
-    def __init__(self, url: str, collection: str, dimension: int):
-        self.client = QdrantClient(url=url, timeout=15)
+    def __init__(
+        self, url: str, collection: str, dimension: int, client: QdrantClient | None = None
+    ):
+        self.client = client or QdrantClient(url=url, timeout=15)
         self.collection = collection
         self.dimension = dimension
 

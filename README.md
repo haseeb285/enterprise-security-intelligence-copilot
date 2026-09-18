@@ -4,7 +4,7 @@ Portfolio project for a **local, synthetic** security intelligence workflow. The
 
 ## Current status
 
-Phase 4 local LLM foundation is complete: PostgreSQL and synthetic telemetry, local policy retrieval, and a native macOS Ollama provider with text and schema-constrained generation. No RAG answer generation, API, ML model, agent, or UI is implemented yet. See [the phased checklist](docs/implementation-checklist.md), [RAG design](docs/rag.md), and [LLM foundation](docs/llm.md).
+Phase 5 FastAPI boundary is complete: PostgreSQL and synthetic telemetry, local policy retrieval, a native macOS Ollama provider, and versioned read-only API routes with demo token roles, health, and audit logs. No RAG answer generation, ML model, agent, or UI is implemented yet. See [the phased checklist](docs/implementation-checklist.md), [API guide](docs/api.md), and [security notes](docs/security.md).
 
 ## Local setup
 
@@ -49,6 +49,14 @@ RUN_LIVE_OLLAMA=1 .venv/bin/python -m pytest -m live_ollama
 
 See [LLM setup and limitations](docs/llm.md). The ordinary test suite mocks Ollama and does not need a downloaded model.
 
+For Phase 5, set distinct random `DEMO_API_TOKEN` (admin) and `DEMO_READ_TOKEN` (reader) values in the ignored `.env`, then start the loopback API:
+
+```bash
+.venv/bin/uvicorn app.api.main:create_app --factory --host 127.0.0.1 --port 8000
+```
+
+Open `http://127.0.0.1:8000/api/v1/docs` for OpenAPI. See [API guide](docs/api.md) for routes, validation, auth, and a local smoke check. The demo tokens are not enterprise SSO.
+
 `requirements-dev.lock` records the exact local Python environment, including transitive packages. Refresh it deliberately after dependency changes. `pyproject.toml` lists direct dependencies.
 
 ## Documentation
@@ -62,5 +70,8 @@ See [LLM setup and limitations](docs/llm.md). The ordinary test suite mocks Olla
 - [Phase 3 checkpoint](docs/phase-3-checkpoint.md)
 - [Local LLM foundation](docs/llm.md)
 - [Phase 4 checkpoint](docs/phase-4-checkpoint.md)
+- [Versioned API](docs/api.md)
+- [Demo security boundary](docs/security.md)
+- [Phase 5 checkpoint](docs/phase-5-checkpoint.md)
 
 The full architecture, workflows, measured evaluation results, and demo instructions will be documented as the corresponding components are implemented and verified.

@@ -8,6 +8,7 @@ click==8.5.0
 cloudpickle==3.1.2
 # Editable Git install with no remote (enterprise-security-intelligence-copilot==0.1.0)
 -e .
+fastapi==0.141.1
 filelock==4.0.0
 fsspec==2026.7.0
 grpcio==1.84.0
@@ -57,6 +58,7 @@ scipy==1.17.1
 sentence-transformers==6.0.1
 shellingham==1.5.4
 SQLAlchemy==2.0.54
+starlette==1.6.0
 sympy==1.14.0
 threadpoolctl==3.7.0
 tokenizers==0.23.2
@@ -67,3 +69,4 @@ typer==0.27.2
 typing-inspection==0.4.4
 typing_extensions==4.16.0
 urllib3==2.8.0
+uvicorn==0.53.0
