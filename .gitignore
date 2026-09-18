@@ -1,0 +1,36 @@
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Python and tooling
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+build/
+dist/
+
+# Runtime data and private inputs
+work/
+outputs/
+data/private/
+data/runtime/
+models/
+mlruns/
+mlartifacts/
+mlflow.db
+*.sqlite3
+*.db
+
+# OS / editors
+.DS_Store
+.idea/
+.vscode/
