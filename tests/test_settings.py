@@ -10,7 +10,7 @@ def test_safe_local_defaults() -> None:
     settings = Settings(_env_file=None)
 
     assert settings.app_env == "development"
-    assert settings.ollama_model == "qwen3:4b-instruct"
+    assert settings.ollama_model == "qwen3.5:4b"
     assert settings.database_url is None
     assert settings.demo_api_token is None
 

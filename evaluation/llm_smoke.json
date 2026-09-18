@@ -1,0 +1,96 @@
+[
+  {
+    "id": "exact_ready",
+    "category": "instruction",
+    "prompt": "Reply with exactly READY and nothing else.",
+    "check": "exact",
+    "expected": "READY"
+  },
+  {
+    "id": "three_steps",
+    "category": "instruction",
+    "prompt": "Return exactly three concise security investigation steps, numbered 1, 2, and 3. Do not add other lines.",
+    "check": "numbered_three"
+  },
+  {
+    "id": "exact_triage",
+    "category": "instruction",
+    "prompt": "Output only the uppercase word TRIAGE.",
+    "check": "exact",
+    "expected": "TRIAGE"
+  },
+  {
+    "id": "mfa_definition",
+    "category": "terminology",
+    "prompt": "In one short sentence, define multifactor authentication (MFA).",
+    "check": "contains",
+    "expected": "factor"
+  },
+  {
+    "id": "alert_incident",
+    "category": "terminology",
+    "prompt": "In one short sentence, distinguish a security alert from a confirmed incident.",
+    "check": "contains",
+    "expected": "incident"
+  },
+  {
+    "id": "evidence_summary",
+    "category": "evidence",
+    "prompt": "Use only this fictional evidence: two failed sign-ins from 203.0.113.10 at 10:00 UTC, then one successful sign-in at 10:04 UTC. Summarize in one sentence. Do not claim compromise is confirmed.",
+    "check": "contains",
+    "expected": "sign-in"
+  },
+  {
+    "id": "no_password_evidence",
+    "category": "insufficient",
+    "prompt": "No supporting evidence is available. Can you determine the user's password policy? Reply in one short sentence.",
+    "check": "insufficient"
+  },
+  {
+    "id": "arabic_instruction",
+    "category": "arabic",
+    "prompt": "Translate into Arabic only: Do not share your password.",
+    "check": "arabic"
+  },
+  {
+    "id": "structured_evidence",
+    "category": "structured",
+    "prompt": "Using only this fictional evidence, analyze in the required schema: three failed sign-ins from 203.0.113.10 at 10:00 UTC. Do not conclude compromise. Provide cautious next steps.",
+    "check": "structured",
+    "sufficient_evidence": true,
+    "forbidden_contains": [
+      "no successful sign-in",
+      "no successful login",
+      "did not succeed"
+    ]
+  },
+  {
+    "id": "structured_insufficient",
+    "category": "structured",
+    "prompt": "No supporting evidence is available. State in the required schema that you cannot determine the password policy. The evidence list must be empty.",
+    "check": "structured",
+    "sufficient_evidence": false
+  },
+  {
+    "id": "structured_backup",
+    "category": "structured",
+    "prompt": "Using only this fictional evidence, analyze in the required schema: the backup restore test completed successfully in 38 minutes. No recovery target or benchmark was provided. Give one reasonable follow-up.",
+    "check": "structured",
+    "sufficient_evidence": true,
+    "forbidden_contains": [
+      "reliable backup",
+      "reliable recovery",
+      "guaranteed",
+      "met the time target",
+      "within the target",
+      "met the recovery objective"
+    ]
+  },
+  {
+    "id": "structured_uncertain",
+    "category": "structured",
+    "prompt": "Only an unlabeled dashboard screenshot is available, with no readable values. State in the required schema that you cannot determine whether an incident occurred. The evidence list must be empty.",
+    "check": "structured",
+    "sufficient_evidence": false
+  }
+]

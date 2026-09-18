@@ -15,7 +15,12 @@ class Settings(BaseSettings):
     app_env: Literal["development", "test", "production"] = "development"
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"
     ollama_base_url: HttpUrl = HttpUrl("http://127.0.0.1:11434")
-    ollama_model: str = Field(default="qwen3:4b-instruct", min_length=1)
+    ollama_model: str = Field(default="qwen3.5:4b", min_length=1)
+    llm_timeout_seconds: int = Field(default=180, ge=5, le=600)
+    llm_temperature: float = Field(default=0.1, ge=0, le=2)
+    llm_context_length: int = Field(default=4096, ge=512, le=16384)
+    llm_max_output_tokens: int = Field(default=384, ge=16, le=2048)
+    llm_keep_alive: str = Field(default="1m", min_length=1)
     qdrant_url: HttpUrl = HttpUrl("http://127.0.0.1:6333")
     embedding_model: str = Field(default="intfloat/multilingual-e5-small", min_length=1)
     rag_collection: str = Field(default="synthetic_policies_e5_small_v1", min_length=1)

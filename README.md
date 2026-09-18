@@ -4,7 +4,7 @@ Portfolio project for a **local, synthetic** security intelligence workflow. The
 
 ## Current status
 
-Phase 3 local policy retrieval is complete: PostgreSQL and synthetic telemetry, plus seven fictional policies, local multilingual embeddings, Qdrant indexing, relevance-gated retrieval, and structured citations. No LLM, API, ML model, agent, or UI is implemented yet. See [the phased checklist](docs/implementation-checklist.md) and [RAG design and measurements](docs/rag.md).
+Phase 4 local LLM foundation is complete: PostgreSQL and synthetic telemetry, local policy retrieval, and a native macOS Ollama provider with text and schema-constrained generation. No RAG answer generation, API, ML model, agent, or UI is implemented yet. See [the phased checklist](docs/implementation-checklist.md), [RAG design](docs/rag.md), and [LLM foundation](docs/llm.md).
 
 ## Local setup
 
@@ -40,6 +40,15 @@ docker compose up -d postgres qdrant
 
 Both services bind their host ports to loopback by default. See [data model](docs/data-model.md), [synthetic data](docs/synthetic-data.md), and [local RAG](docs/rag.md) for behavior and validation.
 
+For Phase 4, install the official native Ollama macOS app and pull `qwen3.5:4b` (approximately 3.4 GB). Keep the model on the host. With Ollama available at `OLLAMA_BASE_URL`, run:
+
+```bash
+.venv/bin/python -m app.llm.smoke
+RUN_LIVE_OLLAMA=1 .venv/bin/python -m pytest -m live_ollama
+```
+
+See [LLM setup and limitations](docs/llm.md). The ordinary test suite mocks Ollama and does not need a downloaded model.
+
 `requirements-dev.lock` records the exact local Python environment, including transitive packages. Refresh it deliberately after dependency changes. `pyproject.toml` lists direct dependencies.
 
 ## Documentation
@@ -51,5 +60,7 @@ Both services bind their host ports to loopback by default. See [data model](doc
 - [Synthetic data methodology](docs/synthetic-data.md)
 - [Local policy retrieval](docs/rag.md)
 - [Phase 3 checkpoint](docs/phase-3-checkpoint.md)
+- [Local LLM foundation](docs/llm.md)
+- [Phase 4 checkpoint](docs/phase-4-checkpoint.md)
 
 The full architecture, workflows, measured evaluation results, and demo instructions will be documented as the corresponding components are implemented and verified.
