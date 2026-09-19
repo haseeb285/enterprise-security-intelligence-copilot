@@ -1,0 +1,238 @@
+{
+  "case_counts": {
+    "agent_routing": {
+      "categories": {
+        "ambiguous": 1,
+        "events": 4,
+        "incident": 2,
+        "multi": 4,
+        "no_answer": 4,
+        "policy": 3
+      },
+      "total": 18
+    },
+    "fact_expectations": {
+      "categories": {
+        "fact_expectation": 6
+      },
+      "total": 6
+    },
+    "integrated": {
+      "categories": {
+        "ambiguous": 1,
+        "dependency_failure": 1,
+        "event_ml": 2,
+        "event_ml_policy": 1,
+        "event_only": 3,
+        "event_policy": 2,
+        "insufficient_history": 1,
+        "invalid_input": 1,
+        "known_ml_limit": 1,
+        "ml_only": 2,
+        "no_policy": 1,
+        "policy_only": 2,
+        "prompt_injection": 1,
+        "unknown": 1
+      },
+      "total": 20
+    },
+    "retrieval": {
+      "categories": {
+        "answerable": 39,
+        "unanswerable": 8
+      },
+      "total": 47
+    },
+    "safety": {
+      "categories": {
+        "authentication": 1,
+        "dependency_failure": 4,
+        "insufficient_evidence": 2,
+        "prompt_injection": 2,
+        "unknown_identifier": 3,
+        "write_request": 1
+      },
+      "total": 13
+    },
+    "structured_generation": {
+      "categories": {
+        "arabic": 1,
+        "evidence": 1,
+        "instruction": 3,
+        "insufficient": 1,
+        "structured": 4,
+        "terminology": 2
+      },
+      "total": 12
+    }
+  },
+  "live": {
+    "completed": true,
+    "fact_checks": [
+      {
+        "case_id": "policy_password",
+        "id": "password_minimum",
+        "passed": true
+      },
+      {
+        "case_id": "policy_backup",
+        "id": "backup_retention",
+        "passed": true
+      },
+      {
+        "case_id": "event_exact",
+        "id": "exact_event",
+        "passed": true
+      },
+      {
+        "case_id": "impossible_travel",
+        "id": "impossible_countries",
+        "passed": true
+      },
+      {
+        "case_id": "impossible_travel",
+        "id": "impossible_score",
+        "passed": true
+      },
+      {
+        "case_id": "impossible_travel",
+        "id": "impossible_flag",
+        "passed": true
+      }
+    ],
+    "integrated": {
+      "anomaly_flag_fidelity": 20,
+      "anomaly_score_fidelity": 20,
+      "case_count": 20,
+      "categories": {
+        "ambiguous": 1,
+        "dependency_failure": 1,
+        "event_ml": 2,
+        "event_ml_policy": 1,
+        "event_only": 3,
+        "event_policy": 2,
+        "insufficient_history": 1,
+        "invalid_input": 1,
+        "known_ml_limit": 1,
+        "ml_only": 2,
+        "no_policy": 1,
+        "policy_only": 2,
+        "prompt_injection": 1,
+        "unknown": 1
+      },
+      "deterministic_fact_checks": 6,
+      "deterministic_fact_total": 6,
+      "event_id_fidelity": 20,
+      "evidence_separation": 20,
+      "evidence_sufficiency": 20,
+      "execution_limits": 20,
+      "incident_id_fidelity": 20,
+      "mean_latency_seconds": 26.62,
+      "median_latency_seconds": 29.563,
+      "policy_citation_fidelity": 20,
+      "procedural_completion": 20,
+      "source_provenance_fidelity": 20,
+      "structured_calls": 35,
+      "structured_malformed": 0,
+      "structured_response_valid": 20,
+      "tool_selection_correct": 20,
+      "unnecessary_tool_calls": 0,
+      "unsupported_identifier_case_count": 0,
+      "unsupported_identifier_count": 0,
+      "unsupported_score_reference_count": 0
+    },
+    "manual_review": {
+      "answers_request": 19,
+      "case_count": 20,
+      "distinguishes_ml_from_observed_facts": 20,
+      "does_not_contradict_observed_evidence": 20,
+      "does_not_invent_policy_requirements": 20,
+      "no_unsupported_factual_claims": 20,
+      "preserves_uncertainty": 20
+    },
+    "structured_generation": {
+      "case_count": 12,
+      "insufficiency_instruction_following": 2,
+      "insufficiency_total": 2,
+      "malformed_output_count": 0,
+      "mean_latency_seconds": 4.321,
+      "median_latency_seconds": 3.275,
+      "passed": 12,
+      "schema_total": 4,
+      "schema_valid": 4,
+      "structured_evidence_discipline": 4
+    }
+  },
+  "notice": "SYNTHETIC DEMONSTRATION DATA. This is a small local development evaluation, not production SOC performance.",
+  "offline": {
+    "completed": true,
+    "ml": {
+      "config": "baseline",
+      "false_positive_observations": 40,
+      "false_positive_rate": 0.0686106346483705,
+      "flagged_precision": 0.1111111111111111,
+      "holdout_observations": 589,
+      "impossible_travel": {
+        "best_rank": 325,
+        "best_score": -0.21107408822812324,
+        "flagged": false,
+        "observation_keys": [
+          "user:U105:2026-08-31T00:00:00+00:00"
+        ],
+        "scenario_id": "SCN002",
+        "scenario_type": "impossible_travel"
+      },
+      "impossible_travel_regression": {
+        "expected_countries": [
+          "DE",
+          "JP"
+        ],
+        "expected_minutes_apart": 15,
+        "flagged": false,
+        "passed": true,
+        "score": -0.21107408822812324
+      },
+      "inference_latency": {
+        "cold_ms": 52.80766700161621,
+        "warm_mean_ms": 14.339683401340153,
+        "warm_median_ms": 14.169375004712492
+      },
+      "normal_holdout_observations": 583,
+      "scenario_count": 6,
+      "scenario_recall": 0.8333333333333334,
+      "scenarios_flagged": 5,
+      "top_10_scenario_capture": 4,
+      "top_5_scenario_capture": 2
+    },
+    "retrieval": {
+      "answerable_acceptance_rate": 0.8717948717948718,
+      "arabic_positive_total": 4,
+      "arabic_recall_at_1": 1.0,
+      "citation_source_correct": 39,
+      "citation_source_total": 39,
+      "deterministic_repeat_match": true,
+      "latency_mean_ms": 22.897664871824748,
+      "latency_median_ms": 20.95983299659565,
+      "mrr": 1.0,
+      "negative_rejected": 8,
+      "negative_total": 8,
+      "negatives": 8,
+      "positive_accepted": 34,
+      "positives": 39,
+      "queries": 47,
+      "recall_at_1": 1.0,
+      "recall_at_3": 1.0,
+      "recall_at_5": 1.0,
+      "threshold": 0.805,
+      "unanswerable_rejection_rate": 1.0,
+      "warm_repeat_mean_ms": 20.917069084695886,
+      "warm_repeat_median_ms": 20.716541999718174
+    },
+    "safety": {
+      "case_count": 13,
+      "failed": 0,
+      "passed": 13
+    }
+  },
+  "suite_version": "1.0.0"
+}

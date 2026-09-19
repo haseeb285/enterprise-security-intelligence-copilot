@@ -1,0 +1,11 @@
+{
+  "description": "Application-owned deterministic facts selected before the Phase 10 live run.",
+  "cases": [
+    {"id": "password_minimum", "case_id": "policy_password", "kind": "policy_text", "expected": "sixteen characters"},
+    {"id": "backup_retention", "case_id": "policy_backup", "kind": "policy_text", "expected": "thirty days"},
+    {"id": "exact_event", "case_id": "event_exact", "kind": "event_id", "expected": "EV000001"},
+    {"id": "impossible_countries", "case_id": "impossible_travel", "kind": "countries", "expected": ["DE", "JP"]},
+    {"id": "impossible_score", "case_id": "impossible_travel", "kind": "anomaly_score", "expected": -0.21107408822812324},
+    {"id": "impossible_flag", "case_id": "impossible_travel", "kind": "anomaly_flag", "expected": false}
+  ]
+}

@@ -4,7 +4,7 @@ Portfolio project for a **local, synthetic** security intelligence workflow. The
 
 ## Current status
 
-Phase 9 adds a working Streamlit client over the FastAPI boundary. Seven views cover the synthetic dashboard, bounded investigations, security events, cited knowledge, typed anomaly evidence, dependency health, and safe admin audit metadata. The known U105 impossible-travel model miss remains visible beside the observed events. No autonomous remediation is implemented. See [the frontend guide](docs/frontend.md), [the phased checklist](docs/implementation-checklist.md), [ML guide](docs/ml.md), [agent guide](docs/agent.md), and [security notes](docs/security.md).
+Phase 10 adds a reproducible layered development evaluation over retrieval, structured generation, routing, ML, integrated grounding, safety/failure behavior, and latency. It reports each layer separately and retains retrieval gate false negatives, the ML false-positive rate, the U105 impossible-travel miss, and local inference latency. No production performance or autonomous remediation is claimed. See [the evaluation guide](docs/evaluation.md), [generated measured summary](evaluation/results/phase10-summary.md), and [the phased checklist](docs/implementation-checklist.md).
 
 ## Local setup
 
@@ -78,6 +78,17 @@ ESIC_API_BASE_URL=http://127.0.0.1:8000/api/v1 \
 
 Open `http://127.0.0.1:8501` and enter the reader or admin demo token in the password field. Streamlit communicates only with FastAPI; it does not connect directly to PostgreSQL, Qdrant, Ollama, LangGraph, or the ML service. See [the frontend guide](docs/frontend.md) and [Phase 9 checkpoint](docs/phase-9-checkpoint.md).
 
+## Development evaluation
+
+Run the layers that do not require Ollama, then the live local-model layers:
+
+```bash
+.venv/bin/python -m app.evaluation.run --offline
+.venv/bin/python -m app.evaluation.run --live
+```
+
+The suite uses synthetic events, fictional policies, the local `qwen3.5:4b` model, and a small development case set. It does not measure production SOC performance and does not calculate one overall accuracy score. Exact measured strengths and failures are generated in [the Phase 10 summary](evaluation/results/phase10-summary.md); methodology and reproduction details are in [the evaluation guide](docs/evaluation.md).
+
 `requirements-dev.lock` records the exact local Python environment, including transitive packages. Refresh it deliberately after dependency changes. `pyproject.toml` lists direct dependencies.
 
 ## Documentation
@@ -101,5 +112,8 @@ Open `http://127.0.0.1:8501` and enter the reader or admin demo token in the pas
 - [Phase 8 checkpoint](docs/phase-8-checkpoint.md)
 - [Streamlit frontend](docs/frontend.md)
 - [Phase 9 checkpoint](docs/phase-9-checkpoint.md)
+- [Layered development evaluation](docs/evaluation.md)
+- [Phase 10 checkpoint](docs/phase-10-checkpoint.md)
+- [Generated Phase 10 results](evaluation/results/phase10-summary.md)
 
 The full architecture, workflows, measured evaluation results, and demo instructions will be documented as the corresponding components are implemented and verified.

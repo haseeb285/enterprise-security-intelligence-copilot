@@ -294,3 +294,16 @@ def test_invented_anomaly_score_and_write_action_are_filtered():
     assert "anomaly_score_reference_filtered" in result.errors
     assert result.recommended_next_steps == ["Review related events."]
     assert "write_action_recommendation_filtered" in result.errors
+
+
+def test_rounded_ml_analysis_score_is_filtered():
+    synthesis = Synthesis(
+        summary="Synthetic evidence was reviewed.",
+        interpretation="The ML analysis flagged U105 with a score of -0.211.",
+        recommended_next_steps=[],
+    )
+    result = InvestigationAgent(
+        Provider(["analyze_user_anomaly"], synthesis), IntegratedTools()
+    ).run("What is the anomaly score for U105 on 2026-08-31?", "reader")
+    assert "-0.211" not in result.interpretation
+    assert "anomaly_score_reference_filtered" in result.errors

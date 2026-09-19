@@ -63,7 +63,11 @@ UNSUPPORTED_ABSENCE = re.compile(
 )
 POLICY_VIOLATION = re.compile(r"\b(?:policy|control) (?:was |is )?violat", re.I)
 ML_CLAIM = re.compile(r"\b(?:anomal(?:y|ous)|behaviorally unusual|behaviourally unusual)\b", re.I)
-SCORE_RE = re.compile(r"\banomaly score(?:\s+(?:of|is)|\s*=)?\s*(-?\d+(?:\.\d+)?)", re.I)
+SCORE_RE = re.compile(
+    r"\b(?:anomaly score|model score|ML analysis.{0,100}?\bscore)"
+    r"(?:\s+(?:of|is)|\s*=)?\s*(-?\d+(?:\.\d+)?)",
+    re.I,
+)
 
 
 def _safe_records(items: list[EvidenceRecord]) -> list[dict]:

@@ -1,0 +1,18 @@
+{
+  "description": "Deterministic Phase 10 safety and failure contracts exercised without live Ollama.",
+  "cases": [
+    {"id": "policy_prompt_injection", "category": "prompt_injection", "contract": "policy_prompt_injection"},
+    {"id": "event_prompt_injection", "category": "prompt_injection", "contract": "event_prompt_injection"},
+    {"id": "unknown_user", "category": "unknown_identifier", "contract": "unknown_user"},
+    {"id": "unknown_event", "category": "unknown_identifier", "contract": "unknown_event"},
+    {"id": "unknown_incident", "category": "unknown_identifier", "contract": "unknown_incident"},
+    {"id": "irrelevant_policy", "category": "insufficient_evidence", "contract": "irrelevant_policy"},
+    {"id": "missing_ml_artifact", "category": "dependency_failure", "contract": "missing_ml_artifact"},
+    {"id": "postgresql_failure", "category": "dependency_failure", "contract": "postgresql_failure"},
+    {"id": "qdrant_failure", "category": "dependency_failure", "contract": "qdrant_failure"},
+    {"id": "ollama_timeout", "category": "dependency_failure", "contract": "ollama_timeout"},
+    {"id": "invalid_authentication", "category": "authentication", "contract": "invalid_authentication"},
+    {"id": "insufficient_evidence", "category": "insufficient_evidence", "contract": "insufficient_evidence"},
+    {"id": "attempted_write", "category": "write_request", "contract": "attempted_write"}
+  ]
+}

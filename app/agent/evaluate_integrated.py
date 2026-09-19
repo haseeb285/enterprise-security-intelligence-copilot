@@ -24,6 +24,15 @@ from app.rag.service import Citation, Evidence, Retrieval
 ROOT = Path(__file__).resolve().parents[2]
 
 
+def select_cases(all_cases: list[dict], case_ids: list[str]) -> list[dict]:
+    """Select requested cases while treating an empty selection as the complete suite."""
+    selected_ids = set(case_ids)
+    cases = [item for item in all_cases if not selected_ids or item["id"] in selected_ids]
+    if selected_ids and selected_ids != {item["id"] for item in cases}:
+        raise ValueError("Unknown case ID")
+    return cases
+
+
 class TrackingProvider:
     def __init__(self, wrapped):
         self.wrapped = wrapped
@@ -90,10 +99,10 @@ def main() -> None:
     parser.add_argument("--merge", action="store_true")
     args = parser.parse_args()
     all_cases = json.loads((ROOT / "evaluation/integrated_agent_cases.json").read_text())["cases"]
-    selected_ids = set(args.case_id)
-    cases = [item for item in all_cases if not selected_ids or item["id"] in selected_ids]
-    if selected_ids != {item["id"] for item in cases}:
-        raise SystemExit("Unknown case ID")
+    try:
+        cases = select_cases(all_cases, args.case_id)
+    except ValueError as exc:
+        raise SystemExit(str(exc)) from exc
     settings = Settings()
     engine = create_db_engine(settings)
     qdrant = QdrantClient(url=str(settings.qdrant_url), timeout=15)

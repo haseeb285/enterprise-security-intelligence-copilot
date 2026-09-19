@@ -1,0 +1,12 @@
+{
+  "version": "1.0.0",
+  "notice": "SYNTHETIC DEMONSTRATION DATA. This is a small local development evaluation, not production SOC performance.",
+  "datasets": {
+    "retrieval": "evaluation/rag_cases.json",
+    "structured_generation": "evaluation/llm_smoke.json",
+    "agent_routing": "evaluation/agent_cases.json",
+    "integrated": "evaluation/integrated_agent_cases.json",
+    "fact_expectations": "evaluation/phase10_fact_expectations.json",
+    "safety": "evaluation/phase10_safety_cases.json"
+  }
+}

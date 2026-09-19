@@ -19,7 +19,9 @@ def evaluate(service: RagService, cases: list[dict], threshold: float) -> dict:
     accepted = 0
     arabic = [0, 0]
     latencies = []
-    for case in cases:
+    records = []
+    citation_correct = 0
+    for index, case in enumerate(cases):
         start = time.perf_counter()
         result = service.retrieve(case["query"], top_k=5)
         latencies.append((time.perf_counter() - start) * 1000)
@@ -27,6 +29,15 @@ def evaluate(service: RagService, cases: list[dict], threshold: float) -> dict:
         eligible = [item for item in raw if item.score >= threshold]
         if case["document"] is None:
             reject += not bool(eligible)
+            records.append(
+                {
+                    "id": case.get("id", f"retrieval-{index}"),
+                    "answerable": False,
+                    "accepted": bool(eligible),
+                    "target_rank": None,
+                    "citation_correct": not bool(eligible),
+                }
+            )
             continue
         accepted += bool(eligible)
         ranks = [
@@ -36,6 +47,22 @@ def evaluate(service: RagService, cases: list[dict], threshold: float) -> dict:
             and item.citation.section == case["section"]
         ]
         rank = min(ranks) if ranks else None
+        correct = bool(
+            rank
+            and raw[rank - 1].citation.source
+            and raw[rank - 1].citation.document == case["document"]
+            and raw[rank - 1].citation.section == case["section"]
+        )
+        citation_correct += correct
+        records.append(
+            {
+                "id": case.get("id", f"retrieval-{index}"),
+                "answerable": True,
+                "accepted": bool(eligible),
+                "target_rank": rank,
+                "citation_correct": correct,
+            }
+        )
         reciprocal.append(1 / rank if rank else 0)
         for k in hits:
             hits[k] += bool(rank and rank <= k)
@@ -55,11 +82,16 @@ def evaluate(service: RagService, cases: list[dict], threshold: float) -> dict:
         "mrr": statistics.mean(reciprocal),
         "negative_rejected": reject,
         "negative_total": negatives,
+        "unanswerable_rejection_rate": reject / negatives if negatives else 0.0,
         "positive_accepted": accepted,
-        "arabic_recall_at_1": arabic[0] / arabic[1],
+        "answerable_acceptance_rate": accepted / positives if positives else 0.0,
+        "citation_source_correct": citation_correct,
+        "citation_source_total": positives,
+        "arabic_recall_at_1": arabic[0] / arabic[1] if arabic[1] else None,
         "arabic_positive_total": arabic[1],
         "latency_mean_ms": statistics.mean(latencies),
         "latency_median_ms": statistics.median(latencies),
+        "records": records,
     }
 
 
