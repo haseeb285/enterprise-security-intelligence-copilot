@@ -4,7 +4,7 @@ Portfolio project for a **local, synthetic** security intelligence workflow. The
 
 ## Current status
 
-Phase 6 adds a bounded, read-only LangGraph investigation agent over the existing synthetic telemetry and local policy retrieval. It selects relevant evidence tools, separates observed records from model interpretation, and exposes `POST /api/v1/investigate` through the demo-authenticated API. No ML model, MLflow, UI, or autonomous remediation is implemented. See [the phased checklist](docs/implementation-checklist.md), [agent guide](docs/agent.md), [API guide](docs/api.md), and [security notes](docs/security.md).
+Phase 7 adds a leakage-safe synthetic behavioral anomaly subsystem: UTC daily features, a chronological Isolation Forest experiment, persisted preprocessing/model artifact, reusable inference service, separate scenario evaluation, and local MLflow tracking. It is not integrated into LangGraph yet. No UI or autonomous remediation is implemented. See [the phased checklist](docs/implementation-checklist.md), [ML guide](docs/ml.md), [agent guide](docs/agent.md), and [security notes](docs/security.md).
 
 ## Local setup
 
@@ -59,6 +59,8 @@ Open `http://127.0.0.1:8000/api/v1/docs` for OpenAPI. See [API guide](docs/api.m
 
 For the Phase 6 synthetic development evaluation, run `.venv/bin/python -m app.agent.evaluate` while PostgreSQL, Qdrant, and native Ollama are healthy. Detailed per-request results are written to ignored `work/` files. See [agent design and limits](docs/agent.md).
 
+For Phase 7, run `MLFLOW_DISABLE_AGENT_HINT=1 .venv/bin/python -m app.ml.train --clean`. It trains from the synthetic PostgreSQL events, evaluates against the separate ignored scenario file, writes the selected artifact under ignored `models/`, and records two local MLflow runs under ignored `work/`. See [ML design and measured results](docs/ml.md).
+
 `requirements-dev.lock` records the exact local Python environment, including transitive packages. Refresh it deliberately after dependency changes. `pyproject.toml` lists direct dependencies.
 
 ## Documentation
@@ -77,5 +79,7 @@ For the Phase 6 synthetic development evaluation, run `.venv/bin/python -m app.a
 - [Phase 5 checkpoint](docs/phase-5-checkpoint.md)
 - [Read-only LangGraph agent](docs/agent.md)
 - [Phase 6 checkpoint](docs/phase-6-checkpoint.md)
+- [Synthetic anomaly model](docs/ml.md)
+- [Phase 7 checkpoint](docs/phase-7-checkpoint.md)
 
 The full architecture, workflows, measured evaluation results, and demo instructions will be documented as the corresponding components are implemented and verified.

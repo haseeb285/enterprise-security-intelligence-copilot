@@ -21,6 +21,8 @@ dependencies = [
   "fastapi==0.141.1",
   "uvicorn==0.53.0",
   "langgraph==1.2.11",
+  "scikit-learn==1.9.1",
+  "mlflow==3.16.1",
 ]
 
 [project.optional-dependencies]

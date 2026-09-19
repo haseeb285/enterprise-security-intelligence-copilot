@@ -36,4 +36,4 @@ docker compose ps
 
 The default seed is `42`, with 12,000 baseline events and 65 scenario events. Repeating the command with matching settings reports `already_seeded` and does not duplicate rows. To intentionally replace this dedicated demo dataset, use `python -m app.db.seed --seed 43 --reset`; the command refuses to modify a populated database without its synthetic seed marker or one whose recorded counts have changed. Do not point it at any non-demo database. `--normal-events` can reduce count for development tests; `--ground-truth-path` changes the local evaluation artifact location. The default artifact is Git-ignored.
 
-All generated timestamps, IPs, names, and scenario outcomes are synthetic. Isolation Forest training and detection performance have not been implemented or measured in Phase 2.
+All generated timestamps, IPs, names, and scenario outcomes are synthetic. Phase 7 uses the operational events for unsupervised training and the separate ignored scenario file only for holdout evaluation. See `ml.md` for the measured Isolation Forest results and limitations.

@@ -9,7 +9,7 @@ At every phase boundary: inspect changes, run relevant tests and Ruff, verify im
 - [x] **4 — Local LLM:** provider interface, native Ollama adapter, configurable model, availability and timeout errors, mocked contract tests and local smoke test.
 - [x] **5 — FastAPI:** versioned routes, schemas, validation, demo authentication/roles, safe errors, API tests and OpenAPI checks. See `phase-5-checkpoint.md`.
 - [x] **6 — LangGraph agent:** typed state, selective evidence routing, approved tools, bounded graph, workflow/failure tests. See `phase-6-checkpoint.md`.
-- [ ] **7 — ML and MLflow:** feature engineering, train/holdout evaluation, artifact persistence, inference, tracked experiment, synthetic-data caveat.
+- [x] **7 — ML and MLflow:** leakage-safe daily features, chronological train/holdout evaluation, Isolation Forest persistence/inference, local tracked experiments, synthetic-data caveat. See `phase-7-checkpoint.md`.
 - [ ] **8 — Integrated analysis:** event, anomaly and policy evidence assembly, grounded generation, source validation, insufficient-evidence paths, multi-tool tests.
 - [ ] **9 — Streamlit:** working dashboard, copilot, investigation, knowledge, ML, health and audit views.
 - [ ] **10 — Evaluation:** representative answerable/unanswerable, investigation, multi-tool and failure cases; measurable retrieval, agent, generation and latency results from actual runs.
@@ -20,4 +20,4 @@ At every phase boundary: inspect changes, run relevant tests and Ruff, verify im
 - [ ] **15 — Documentation and demo:** README, requested topic docs, reproducible policy and investigation walkthrough, measured results and clear limitations.
 - [ ] **16 — Final audit:** verify implemented/used/tested/documented matrix, run available stack checks, inspect repository for secrets/private data, resolve critical failures.
 
-**Phase gate:** Phase 6 was approved and completed. Wait for the user's direction before starting Phase 7.
+**Phase gate:** Phase 7 was approved and completed. Wait for the user's direction before starting Phase 8.
