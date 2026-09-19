@@ -149,6 +149,7 @@ def test_startup_health_and_openapi(api):
     assert schema["components"]["securitySchemes"]["HTTPBearer"]["scheme"] == "bearer"
     assert schema["paths"]["/api/v1/events"]["get"]["security"] == [{"HTTPBearer": []}]
     assert schema["paths"]["/api/v1/incidents"]["get"]["security"] == [{"HTTPBearer": []}]
+    assert schema["paths"]["/api/v1/audit"]["get"]["security"] == [{"HTTPBearer": []}]
     assert "/api/v1/chat" not in schema["paths"]
     qdrant.fail = True
     llm.model_available = False
@@ -185,6 +186,18 @@ def test_auth_roles_and_events(api):
         assert session.scalar(select(func.count()).select_from(AuditLog)) == 7
 
 
+def test_admin_only_audit_projection_omits_internal_details(api):
+    client = api[0]
+    assert client.get("/api/v1/audit", headers=auth(READER)).status_code == 403
+    first = client.get("/api/v1/audit?limit=10", headers=auth(ADMIN))
+    assert first.status_code == 200
+    assert first.json() == {"items": [], "total": 0, "limit": 10, "offset": 0}
+    second = client.get("/api/v1/audit?limit=10", headers=auth(ADMIN)).json()
+    assert second["total"] == 1
+    assert second["items"][0]["action"] == "api_list_audit"
+    assert "details" not in second["items"][0]
+
+
 @pytest.mark.parametrize(
     "url",
     [
@@ -198,6 +211,7 @@ def test_auth_roles_and_events(api):
         "/api/v1/events/garbage",
         "/api/v1/users/garbage/events",
         "/api/v1/incidents/garbage",
+        "/api/v1/audit?limit=101",
     ],
 )
 def test_bad_inputs(api, url):

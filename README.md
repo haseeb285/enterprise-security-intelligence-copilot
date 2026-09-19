@@ -4,7 +4,7 @@ Portfolio project for a **local, synthetic** security intelligence workflow. The
 
 ## Current status
 
-Phase 8 integrates the leakage-safe anomaly service into the bounded LangGraph agent. Selective routing can combine synthetic event facts, typed ML analysis, and cited fictional policy context while keeping each category separate. Partial dependency failures retain valid evidence, and the known impossible-travel model miss remains visible. No UI or autonomous remediation is implemented. See [the phased checklist](docs/implementation-checklist.md), [ML guide](docs/ml.md), [agent guide](docs/agent.md), and [security notes](docs/security.md).
+Phase 9 adds a working Streamlit client over the FastAPI boundary. Seven views cover the synthetic dashboard, bounded investigations, security events, cited knowledge, typed anomaly evidence, dependency health, and safe admin audit metadata. The known U105 impossible-travel model miss remains visible beside the observed events. No autonomous remediation is implemented. See [the frontend guide](docs/frontend.md), [the phased checklist](docs/implementation-checklist.md), [ML guide](docs/ml.md), [agent guide](docs/agent.md), and [security notes](docs/security.md).
 
 ## Local setup
 
@@ -69,6 +69,15 @@ For the Phase 8 integrated development evaluation, keep PostgreSQL, Qdrant, nati
 
 The 20-case measured run is documented in [the Phase 8 checkpoint](docs/phase-8-checkpoint.md). Results are written under ignored `work/`.
 
+For Phase 9, keep FastAPI running and start the loopback Streamlit client:
+
+```bash
+ESIC_API_BASE_URL=http://127.0.0.1:8000/api/v1 \
+  .venv/bin/streamlit run frontend/app.py --server.address 127.0.0.1
+```
+
+Open `http://127.0.0.1:8501` and enter the reader or admin demo token in the password field. Streamlit communicates only with FastAPI; it does not connect directly to PostgreSQL, Qdrant, Ollama, LangGraph, or the ML service. See [the frontend guide](docs/frontend.md) and [Phase 9 checkpoint](docs/phase-9-checkpoint.md).
+
 `requirements-dev.lock` records the exact local Python environment, including transitive packages. Refresh it deliberately after dependency changes. `pyproject.toml` lists direct dependencies.
 
 ## Documentation
@@ -90,5 +99,7 @@ The 20-case measured run is documented in [the Phase 8 checkpoint](docs/phase-8-
 - [Synthetic anomaly model](docs/ml.md)
 - [Phase 7 checkpoint](docs/phase-7-checkpoint.md)
 - [Phase 8 checkpoint](docs/phase-8-checkpoint.md)
+- [Streamlit frontend](docs/frontend.md)
+- [Phase 9 checkpoint](docs/phase-9-checkpoint.md)
 
 The full architecture, workflows, measured evaluation results, and demo instructions will be documented as the corresponding components are implemented and verified.

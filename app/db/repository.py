@@ -9,7 +9,7 @@ from typing import Generic, TypeVar
 from sqlalchemy import Select, func, select
 from sqlalchemy.orm import Session
 
-from app.db.models import Incident, SecurityEvent
+from app.db.models import AuditLog, Incident, SecurityEvent
 
 T = TypeVar("T")
 MAX_PAGE_SIZE = 100
@@ -118,6 +118,21 @@ def get_incidents(session: Session, *, limit: int = 50, offset: int = 0) -> Page
         session.scalars(
             select(Incident)
             .order_by(Incident.created_at.desc(), Incident.incident_id.desc())
+            .limit(limit)
+            .offset(offset)
+        )
+    )
+    return Page(items, total, limit, offset)
+
+
+def get_audit_logs(session: Session, *, limit: int = 50, offset: int = 0) -> Page[AuditLog]:
+    """Return a bounded newest-first audit page without exposing detail payloads."""
+    _page_args(limit, offset)
+    total = session.scalar(select(func.count()).select_from(AuditLog)) or 0
+    items = list(
+        session.scalars(
+            select(AuditLog)
+            .order_by(AuditLog.timestamp.desc(), AuditLog.audit_id.desc())
             .limit(limit)
             .offset(offset)
         )

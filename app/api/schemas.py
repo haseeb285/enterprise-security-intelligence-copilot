@@ -113,6 +113,19 @@ class HealthOut(BaseModel):
     dependencies: dict[str, str]
 
 
+class AuditOut(BaseModel):
+    """Safe audit projection; internal details and credentials never cross the API."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    audit_id: int
+    timestamp: datetime
+    action: str
+    resource_type: str
+    resource_id: str | None
+    result: str
+
+
 class RetrievalIn(BaseModel):
     query: str = Field(min_length=1, max_length=4000)
     top_k: int = Field(default=5, ge=1, le=10)

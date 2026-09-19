@@ -11,7 +11,7 @@ At every phase boundary: inspect changes, run relevant tests and Ruff, verify im
 - [x] **6 — LangGraph agent:** typed state, selective evidence routing, approved tools, bounded graph, workflow/failure tests. See `phase-6-checkpoint.md`.
 - [x] **7 — ML and MLflow:** leakage-safe daily features, chronological train/holdout evaluation, Isolation Forest persistence/inference, local tracked experiments, synthetic-data caveat. See `phase-7-checkpoint.md`.
 - [x] **8 — Integrated analysis:** selective event/anomaly/policy evidence assembly, typed ML evidence, aligned windows, grounded generation, source validation, partial/insufficient paths, and measured multi-tool evaluation. See `phase-8-checkpoint.md`.
-- [ ] **9 — Streamlit:** working dashboard, copilot, investigation, knowledge, ML, health and audit views.
+- [x] **9 — Streamlit:** working dashboard, copilot, investigation, knowledge, ML, health and audit views. See `phase-9-checkpoint.md`.
 - [ ] **10 — Evaluation:** representative answerable/unanswerable, investigation, multi-tool and failure cases; measurable retrieval, agent, generation and latency results from actual runs.
 - [ ] **11 — Observability:** structured request/tool/retrieval/LLM/inference timing and failures, dependency health, audit review.
 - [ ] **12 — Docker:** arm64-compatible pinned images, Compose startup, persistent volumes, host Ollama access, reproducible smoke test.
@@ -20,4 +20,4 @@ At every phase boundary: inspect changes, run relevant tests and Ruff, verify im
 - [ ] **15 — Documentation and demo:** README, requested topic docs, reproducible policy and investigation walkthrough, measured results and clear limitations.
 - [ ] **16 — Final audit:** verify implemented/used/tested/documented matrix, run available stack checks, inspect repository for secrets/private data, resolve critical failures.
 
-**Phase gate:** Phase 8 was approved and completed. Wait for the user's direction before starting Phase 9.
+**Phase gate:** Phase 9 was approved and completed. Wait for the user's direction before starting Phase 10.

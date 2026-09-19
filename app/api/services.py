@@ -74,5 +74,8 @@ class ApiService:
     def incident(self, incident_id: str):
         return repository.get_incident(self.session, incident_id)
 
+    def audit_logs(self, limit: int, offset: int):
+        return repository.get_audit_logs(self.session, limit=limit, offset=offset)
+
     def retrieval(self, rag: RagService, query: str, top_k: int) -> Retrieval:
         return rag.retrieve(query, top_k)

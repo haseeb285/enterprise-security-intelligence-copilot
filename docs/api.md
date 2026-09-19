@@ -22,6 +22,7 @@ Open `http://127.0.0.1:8000/api/v1/docs` for interactive OpenAPI or `/api/v1/ope
 | GET | `/api/v1/users/{user_id}/events` | Reader or admin | Bounded events for a synthetic user. |
 | GET | `/api/v1/incidents` | Admin | Bounded list of synthetic incidents. |
 | GET | `/api/v1/incidents/{incident_id}` | Admin | One synthetic incident or 404. |
+| GET | `/api/v1/audit` | Admin | Bounded newest-first safe audit metadata; internal detail payloads are omitted. |
 | POST | `/api/v1/retrieval` | Reader or admin | Evidence-only retrieval with citation metadata and an insufficient-evidence flag. |
 | POST | `/api/v1/investigate` | Reader or admin | Bounded read-only LangGraph investigation; incident evidence requires admin. |
 
@@ -32,6 +33,8 @@ Event filters: `user_id`, `start_time`, `end_time`, `severity`, `event_type`, `s
 Responses use JSON. Missing/invalid token returns 401; insufficient role 403; absent resource 404; invalid input 422; unavailable dependency 503. Safe errors do not echo submitted values, SQL errors, provider internals, filesystem paths, or prompts. Health reports only coarse state labels (`ok`, `unavailable`, `model_missing`, `collection_missing`). The OpenAPI schema documents bearer auth and response models.
 
 Authenticated successful and not-found reads write an `audit_logs` record with action, resource type, optional synthetic ID, result, and demo role. Retrieval failures also log a failure when PostgreSQL remains available. Audit details do not include tokens, queries, policy text, or event payloads. Invalid input and unauthenticated requests do not write audit rows. The audit table's nullable user foreign key remains null for demo-token principals.
+
+The Phase 9 Streamlit client uses only these HTTP routes. Its audit page requires the admin token and receives only `audit_id`, timestamp, action, resource type, optional synthetic resource ID, and result. The API never sends the internal audit `details` payload to the frontend.
 
 ## Quick checks
 

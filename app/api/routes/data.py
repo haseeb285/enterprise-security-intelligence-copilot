@@ -7,6 +7,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from app.api.dependencies import Principal, get_api_service, get_principal, require_admin
 from app.api.schemas import (
+    AuditOut,
     DeviceId,
     ErrorOut,
     EventId,
@@ -206,3 +207,27 @@ def incident(
     if result is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Incident not found")
     return result
+
+
+@router.get(
+    "/audit",
+    response_model=PageOut[AuditOut],
+    responses=ERRORS,
+    summary="List safe audit metadata",
+    description="Bounded admin-only audit view. Internal detail payloads are omitted.",
+    dependencies=[Depends(require_admin)],
+)
+def audit_logs(
+    service: Annotated[ApiService, Depends(get_api_service)],
+    principal: Annotated[Principal, Depends(require_admin)],
+    limit: Annotated[int, Query(ge=1, le=100)] = 50,
+    offset: Annotated[int, Query(ge=0, le=1_000_000)] = 0,
+):
+    return _db_action(
+        service,
+        principal,
+        "api_list_audit",
+        "audit_log",
+        None,
+        lambda: service.audit_logs(limit, offset),
+    )

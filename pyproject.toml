@@ -23,6 +23,7 @@ dependencies = [
   "langgraph==1.2.11",
   "scikit-learn==1.9.1",
   "mlflow==3.16.1",
+  "streamlit==1.64.0",
 ]
 
 [project.optional-dependencies]
@@ -33,7 +34,7 @@ dev = [
 ]
 
 [tool.setuptools.packages.find]
-include = ["app*"]
+include = ["app*", "frontend*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
