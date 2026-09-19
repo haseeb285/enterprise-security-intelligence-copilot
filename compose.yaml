@@ -1,3 +1,48 @@
+name: esic-local-demo
+
+x-api-environment: &api-environment
+  APP_ENV: production
+  LOG_LEVEL: ${LOG_LEVEL:-INFO}
+  DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:?Set POSTGRES_USER in .env}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:?Set POSTGRES_DB in .env}
+  DATABASE_STARTUP_ATTEMPTS: ${DATABASE_STARTUP_ATTEMPTS:-30}
+  DATABASE_STARTUP_DELAY_SECONDS: ${DATABASE_STARTUP_DELAY_SECONDS:-2}
+  QDRANT_URL: http://qdrant:6333
+  RAG_COLLECTION: ${RAG_COLLECTION:-synthetic_policies_e5_small_v1}
+  RAG_MIN_SCORE: ${RAG_MIN_SCORE:-0.805}
+  RAG_CHUNK_TARGET_CHARS: ${RAG_CHUNK_TARGET_CHARS:-650}
+  RAG_CHUNK_OVERLAP_CHARS: ${RAG_CHUNK_OVERLAP_CHARS:-80}
+  EMBEDDING_MODEL: ${EMBEDDING_MODEL:-intfloat/multilingual-e5-small}
+  OLLAMA_BASE_URL: ${COMPOSE_OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+  OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen3.5:4b}
+  LLM_TIMEOUT_SECONDS: ${LLM_TIMEOUT_SECONDS:-180}
+  LLM_TEMPERATURE: ${LLM_TEMPERATURE:-0.1}
+  LLM_CONTEXT_LENGTH: ${LLM_CONTEXT_LENGTH:-4096}
+  LLM_MAX_OUTPUT_TOKENS: ${LLM_MAX_OUTPUT_TOKENS:-384}
+  LLM_KEEP_ALIVE: ${LLM_KEEP_ALIVE:-1m}
+  ML_MODEL_PATH: /app/models/anomaly/isolation_forest_daily_v1.joblib
+  DEMO_API_TOKEN: ${DEMO_API_TOKEN:?Set DEMO_API_TOKEN in .env}
+  DEMO_READ_TOKEN: ${DEMO_READ_TOKEN:?Set DEMO_READ_TOKEN in .env}
+  CORS_ORIGINS: '["http://127.0.0.1:${STREAMLIT_PORT:-8501}","http://localhost:${STREAMLIT_PORT:-8501}"]'
+
+x-api-base: &api-base
+  image: esic-api:phase12
+  build:
+    context: .
+    dockerfile: docker/api.Dockerfile
+    target: runtime
+  environment: *api-environment
+  volumes:
+    - ${MODEL_BIND_PATH:-./models}:/app/models:ro
+    - ${HF_CACHE_BIND_PATH:-./work/huggingface}:/home/esic/.cache/huggingface
+  networks:
+    - backend
+    - application
+  init: true
+  security_opt:
+    - no-new-privileges:true
+  cap_drop:
+    - ALL
+
 services:
   postgres:
     image: postgres:17.11-bookworm
@@ -7,31 +52,159 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
       POSTGRES_DB: ${POSTGRES_DB:?Set POSTGRES_DB in .env}
     ports:
-      - "127.0.0.1:${POSTGRES_PORT:?Set POSTGRES_PORT in .env}:5432"
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - backend
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
       interval: 5s
       timeout: 3s
-      retries: 10
+      retries: 12
       start_period: 10s
+
   qdrant:
     image: qdrant/qdrant:v1.19.1
     restart: unless-stopped
     environment:
       QDRANT__TELEMETRY_DISABLED: "true"
     ports:
-      - "${QDRANT_BIND_HOST:-127.0.0.1}:${QDRANT_PORT:?Set QDRANT_PORT in .env}:6333"
+      - "${QDRANT_BIND_HOST:-127.0.0.1}:${QDRANT_PORT:-6333}:6333"
     volumes:
       - qdrant_data:/qdrant/storage
+    networks:
+      - backend
     healthcheck:
       test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/6333; printf 'GET /readyz HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n' >&3; IFS= read -r line <&3; [[ \"$$line\" == *'200 OK'* ]]"]
       interval: 10s
       timeout: 3s
-      retries: 10
+      retries: 12
       start_period: 10s
+
+  api:
+    <<: *api-base
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      qdrant:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:${API_PORT:-8000}:8000"
+    read_only: true
+    tmpfs:
+      - /tmp:size=128m,mode=1777
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health', timeout=5)"]
+      interval: 15s
+      timeout: 7s
+      retries: 8
+      start_period: 30s
+
+  streamlit:
+    image: esic-streamlit:phase12
+    build:
+      context: .
+      dockerfile: docker/frontend.Dockerfile
+    restart: unless-stopped
+    environment:
+      ESIC_API_BASE_URL: http://api:8000/api/v1
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:${STREAMLIT_PORT:-8501}:8501"
+    networks:
+      - application
+    init: true
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8501/_stcore/health', timeout=5)"]
+      interval: 15s
+      timeout: 5s
+      retries: 8
+      start_period: 20s
+
+  migrate:
+    <<: *api-base
+    profiles: ["bootstrap"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ${MODEL_BIND_PATH:-./models}:/app/models:ro
+      - ${HF_CACHE_BIND_PATH:-./work/huggingface}:/home/esic/.cache/huggingface
+    command: ["alembic", "upgrade", "head"]
+
+  seed:
+    <<: *api-base
+    profiles: ["bootstrap"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ${MODEL_BIND_PATH:-./models}:/app/models:ro
+      - ${HF_CACHE_BIND_PATH:-./work/huggingface}:/home/esic/.cache/huggingface
+      - ${RUNTIME_BIND_PATH:-./work/container-runtime}:/app/data/runtime
+    command: ["python", "-m", "app.db.seed", "--ground-truth-path", "/app/data/runtime/ground_truth.json"]
+
+  ingest:
+    <<: *api-base
+    profiles: ["bootstrap"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      qdrant:
+        condition: service_healthy
+    volumes:
+      - ${MODEL_BIND_PATH:-./models}:/app/models:ro
+      - ${HF_CACHE_BIND_PATH:-./work/huggingface}:/home/esic/.cache/huggingface
+    command: ["python", "-m", "app.rag.ingest", "data/policies/synthetic", "--prune"]
+
+  train:
+    <<: *api-base
+    image: esic-trainer:phase12
+    build:
+      context: .
+      dockerfile: docker/api.Dockerfile
+      target: trainer
+    profiles: ["bootstrap"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ${MODEL_BIND_PATH:-./models}:/app/models
+      - ${HF_CACHE_BIND_PATH:-./work/huggingface}:/home/esic/.cache/huggingface
+      - ${RUNTIME_BIND_PATH:-./work/container-runtime}:/app/data/runtime:ro
+      - ${TRAINING_WORK_BIND_PATH:-./work/container-ml}:/app/work
+    command:
+      - python
+      - -m
+      - app.ml.train
+      - --clean
+      - --truth-path
+      - /app/data/runtime/ground_truth.json
+      - --model-path
+      - /app/models/anomaly/isolation_forest_daily_v1.joblib
+      - --result-path
+      - /app/work/phase7-evaluation.json
+      - --mlflow-db
+      - /app/work/mlflow.db
+      - --mlflow-artifacts
+      - /app/work/mlartifacts
 
 volumes:
   postgres_data:
   qdrant_data:
+
+networks:
+  backend:
+    internal: true
+  application:

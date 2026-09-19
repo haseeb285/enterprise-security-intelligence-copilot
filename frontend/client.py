@@ -3,6 +3,7 @@
 from datetime import datetime
 from typing import Any, Generic, Literal, TypeVar
 from urllib.parse import urlparse
+from uuid import uuid4
 
 import httpx
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter
@@ -191,7 +192,9 @@ class ApiClient:
     ) -> Any:
         if protected and not self.token:
             raise ApiClientError("authentication_required", "Enter a local demo bearer token.", 401)
-        headers = {"Authorization": f"Bearer {self.token}"} if protected else {}
+        headers = {"X-Request-ID": uuid4().hex}
+        if protected:
+            headers["Authorization"] = f"Bearer {self.token}"
         try:
             with httpx.Client(
                 base_url=self.base_url,

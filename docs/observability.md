@@ -41,3 +41,9 @@ A seven run microbenchmark of 10,000 counter, timer, and safe event construction
 Use the normal API start command. `LOG_LEVEL` controls the structured logger level. Inspect JSON locally with a tool such as `jq`; do not redirect logs into the repository. Detailed Phase 11 validation artifacts are retained only under ignored `work/`.
 
 Health and metrics are diagnostic aids. The local logger and in memory registry do not provide durable storage, alerting, distributed tracing, tamper resistance, retention, or production monitoring.
+
+## Docker Compose behavior
+
+The API and Streamlit containers write application output to standard output and error. No log directory or Docker socket is mounted. The Streamlit client supplies a new validated request ID for every HTTP call. Compose passes it unchanged into FastAPI, where the existing context propagation covers the agent, tools, retrieval, ML, and Ollama.
+
+During Phase 12 clean-state validation, the browser-driven U105 investigation used request ID `68ec5180fd504a4e9a723d17320d7fa3`. The correlated API log recorded the agent completion and POST completion at 34,539.523 ms and 34,562.328 ms, with two selected tools and three results. A scan of container logs found no demo tokens or submitted request text. Container health probes generate ordinary safe health events and do not call LLM generation.

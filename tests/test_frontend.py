@@ -189,6 +189,16 @@ def test_health_parsing_is_public():
     assert degraded.status == "degraded" and degraded.dependencies["ollama"] == "model_missing"
 
 
+def test_client_supplies_safe_request_id():
+    def handler(request):
+        request_id = request.headers["X-Request-ID"]
+        assert len(request_id) == 32
+        assert request_id.isalnum()
+        return response(200, {"status": "ready", "dependencies": {}})
+
+    ApiClient(BASE, transport=httpx.MockTransport(handler)).health()
+
+
 def test_admin_metrics_parsing():
     payload = {
         "uptime_seconds": 12.5,

@@ -13,6 +13,8 @@ ESIC_API_BASE_URL=http://127.0.0.1:8000/api/v1 \
 
 Open `http://127.0.0.1:8501`. Enter a local reader or admin demo bearer token in the password field. The token remains in the Streamlit session, is sent only in the `Authorization` header, and is never embedded in source code or written by the application. The default API target is loopback and can be changed with `ESIC_API_BASE_URL`.
 
+With Docker Compose, Streamlit uses `ESIC_API_BASE_URL=http://api:8000/api/v1` on the application network. Its image contains only frontend code and frontend runtime dependencies. The container has no backend bind mounts and is not attached to the backend data network. The browser still opens the loopback URL documented in [local deployment](deployment-local.md).
+
 ## Views
 
 - **Dashboard:** coarse dependency readiness, total synthetic event and incident counts, bounded event-type and severity charts, and recent records.
@@ -44,3 +46,9 @@ The UI was exercised against the live local FastAPI service, PostgreSQL, Qdrant,
 - An invalid token produced a safe authentication warning. With FastAPI stopped, Dashboard and System Health displayed the same actionable unavailable message without a Streamlit exception. FastAPI was then restarted and returned ready.
 
 Detailed live outputs are retained only under ignored `work/` files. They are development evidence rather than a Phase 10 evaluation dataset.
+
+## Live Phase 12 container verification
+
+The first browser load found and fixed a container path defect that had left Streamlit's health endpoint green while application import failed. The image now explicitly sets `/app` as its Python import root. After rebuilding, the browser rendered the dashboard through the containerized FastAPI service and showed 12,065 events, 6 incidents, and ready health.
+
+A browser-driven U105 request traveled from Streamlit to FastAPI with generated request ID `68ec5180fd504a4e9a723d17320d7fa3`. It completed in 34.56 seconds, rendered events `EV012026` and `EV012027`, exact model score `-0.21107408822812324`, model version `isolation_forest_daily_v1`, model provenance, and sufficient evidence. The UI also displayed `Not flagged`, preserving the known impossible-travel limitation rather than treating country diversity as proof of an attack.

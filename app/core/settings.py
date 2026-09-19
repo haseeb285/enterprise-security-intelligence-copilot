@@ -32,6 +32,8 @@ class Settings(BaseSettings):
     rag_top_k: int = Field(default=5, ge=1, le=10)
     ml_model_path: Path = Path("models/anomaly/isolation_forest_daily_v1.joblib")
     database_url: SecretStr | None = None
+    database_startup_attempts: int = Field(default=30, ge=1, le=120)
+    database_startup_delay_seconds: float = Field(default=2.0, ge=0.1, le=30)
     demo_api_token: SecretStr | None = None
     demo_read_token: SecretStr | None = None
     cors_origins: list[str] = Field(default_factory=list)

@@ -4,7 +4,7 @@ Portfolio project for a **local, synthetic** security intelligence workflow. The
 
 ## Current status
 
-Phase 11 adds request correlation, content-safe JSON logs, bounded process-local metrics, component latency/failure tracking, and an admin metrics view. It preserves the separate PostgreSQL audit trail and adds no monitoring service. No production performance or autonomous remediation is claimed. See [the observability guide](docs/observability.md), [layered evaluation guide](docs/evaluation.md), and [the phased checklist](docs/implementation-checklist.md).
+Phase 12 adds ARM64 Docker images and an explicit Docker Compose bootstrap for PostgreSQL, Qdrant, FastAPI, and Streamlit while keeping Ollama native on macOS. It preserves the Phase 11 request correlation and safe JSON logs. This is a local demonstration deployment, not a production deployment. See [the local deployment guide](docs/deployment-local.md), [observability guide](docs/observability.md), and [phased checklist](docs/implementation-checklist.md).
 
 ## Local setup
 
@@ -18,7 +18,30 @@ Use Python 3.11 on arm64. On the inspected Mac, that is `/opt/anaconda3/bin/pyth
 .venv/bin/ruff format --check .
 ```
 
-Copy `.env.example` to `.env` only when overriding defaults. Keep local secrets and private inputs out of Git. `OLLAMA_BASE_URL` defaults to the macOS loopback address; Dockerized API settings will override it with `host.docker.internal` in a later phase.
+Copy `.env.example` to `.env` only when overriding defaults. Keep local secrets and private inputs out of Git. `OLLAMA_BASE_URL` defaults to the macOS loopback address for host-native development; Compose configures FastAPI to use `host.docker.internal`.
+
+## Run locally with Docker Compose
+
+Keep Ollama native on macOS, start it, and install the configured model:
+
+```bash
+ollama pull qwen3.5:4b
+curl --fail http://127.0.0.1:11434/api/tags
+```
+
+Create an ignored `.env` from `.env.example` and set PostgreSQL credentials plus distinct random admin and reader demo tokens. Then run the explicit bootstrap:
+
+```bash
+make docker-build
+make docker-infra
+make docker-migrate
+make docker-seed
+make docker-ingest
+make docker-train
+make docker-up
+```
+
+Open <http://127.0.0.1:8501>. PostgreSQL and Qdrant use named volumes; normal startup does not reset, re-seed, re-embed, or retrain them. The API mounts the ignored model directory read-only, while the one-off trainer creates the trusted local artifact. See [local Docker deployment](docs/deployment-local.md) for configuration, health, cleanup, measured memory, failure behavior, and limitations.
 
 For Phase 2, set `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, `POSTGRES_PORT`, and matching `DATABASE_URL` in the ignored `.env`. Generate a unique local password; do not use any organization credentials. Then:
 
@@ -117,5 +140,7 @@ The suite uses synthetic events, fictional policies, the local `qwen3.5:4b` mode
 - [Generated Phase 10 results](evaluation/results/phase10-summary.md)
 - [Phase 11 observability](docs/observability.md)
 - [Phase 11 checkpoint](docs/phase-11-checkpoint.md)
+- [Local Docker Compose deployment](docs/deployment-local.md)
+- [Phase 12 checkpoint](docs/phase-12-checkpoint.md)
 
 The full architecture, workflows, measured evaluation results, and demo instructions will be documented as the corresponding components are implemented and verified.

@@ -35,3 +35,11 @@ Streamlit is an HTTP client of FastAPI. It has no PostgreSQL, Qdrant, Ollama, La
 The user supplies a demo bearer token through a password input. It remains in Streamlit session memory and is sent in the authorization header; it is not hardcoded, logged, placed in the URL, or persisted by the frontend. The API target must be an explicit HTTP(S) URL without embedded credentials. Deployment would require proper identity, TLS, CSRF/session analysis, browser security headers, rate limiting, and managed secrets.
 
 API text and records are untrusted display data. The UI uses Streamlit's text and structured components without unsafe HTML, removes control characters, and bounds long text. It presents model output and LLM interpretation as separate categories and does not convert the anomaly result into a security determination.
+
+## Phase 12 local container boundary
+
+The Compose configuration is for a local demonstration. FastAPI and Streamlit run as UID/GID 10001, drop all Linux capabilities, set `no-new-privileges`, and use read-only root filesystems with bounded temporary filesystems. They are not privileged and do not mount the Docker socket. API and Streamlit ports bind to loopback. Streamlit joins only the application network; PostgreSQL and Qdrant join the backend network; FastAPI bridges the two.
+
+The build context excludes `.env`, Git history, caches, ignored models, runtime ground truth, MLflow databases, evaluation output, tests, and local work files. The runtime image includes only application code, migrations, Alembic configuration, and the public fictional policy corpus. Demo credentials are injected through environment settings. The ignored anomaly model is created explicitly by the trainer and mounted read-only into FastAPI.
+
+Native Ollama is reached through `host.docker.internal`; it is not containerized. Dependency errors remain coarse. The missing-model check returned a typed `dependency_failure`, and PostgreSQL, Qdrant, and Ollama outage checks did not expose exception text or credentials. This configuration does not provide production identity, TLS, managed secrets, hardened egress, image signing, scanning attestations, centralized logs, backups, or orchestration controls.
