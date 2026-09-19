@@ -1,37 +1,124 @@
 # Enterprise Security Intelligence Copilot
 
-Portfolio project for a **local, synthetic** security intelligence workflow. The planned system combines policy retrieval, a simulated SIEM, anomaly detection, and evidence-grounded local LLM explanations. No production security capability or real organization data is claimed.
+A local portfolio project that combines retrieval-augmented generation, a bounded LangGraph agent, and anomaly detection to investigate synthetic security activity. It retrieves fictional policy evidence, queries a simulated SIEM, runs a persisted Isolation Forest, and asks a local Qwen model to explain the assembled evidence without presenting generated interpretation as observed fact.
 
-## Current status
+The complete demonstration runs locally with open-source components. It uses synthetic telemetry and fictional policies and does not claim production SOC effectiveness.
 
-Phase 13 adds GitHub Actions checks for the pinned Python environment, Ruff, ordinary tests, Alembic consistency, Compose configuration, and build-only API, Streamlit, and trainer images. CI requires no native Ollama, private data, ignored model artifact, persistent developer volume, paid API, or repository secret. This is continuous integration for a local demonstration, not deployment automation. See [the CI guide](docs/ci.md), [local deployment guide](docs/deployment-local.md), and [phased checklist](docs/implementation-checklist.md).
+## What It Does
 
-## Local setup
+An analyst can ask a policy question, inspect a synthetic event, or submit a multi-source investigation such as:
 
-Use an arm64 Python 3.11 interpreter available on your system.
+> Investigate suspicious activity for U104 on 2026-08-31 and determine whether relevant password policy controls apply.
 
-```bash
-python3.11 -m venv .venv
-.venv/bin/python -m pip install -r requirements-dev.lock
-.venv/bin/python -m pytest
-.venv/bin/ruff check .
-.venv/bin/ruff format --check .
+The application validates the request, selects only justified read-only tools, retrieves event and policy evidence, optionally runs anomaly analysis, and returns clearly separated sections:
+
+- observed PostgreSQL records;
+- typed ML output, including the exact score and flag;
+- fictional policy excerpts with Qdrant citation metadata;
+- local-LLM interpretation and bounded next steps;
+- application-owned sources, tool outcomes, and evidence sufficiency.
+
+Unknown identifiers, weak retrieval, missing dependencies, and ambiguous requests produce explicit partial or insufficient-evidence outcomes.
+
+## Demo / Screenshots
+
+The Streamlit application includes Dashboard, Investigation Copilot, Security Events, Knowledge Base, ML Analytics, System Health, and Audit/About views.
+
+Repository screenshots have not been fabricated or committed. The owner can add four useful captures after starting the real stack: the Dashboard, a three-source investigation, the U105 model disagreement, and Evaluation/System Health. See the [3–5 minute demo guide and screenshot checklist](docs/demo.md).
+
+## Architecture
+
+```mermaid
+flowchart TB
+    U[Analyst] --> UI[Streamlit UI]
+    UI --> API[FastAPI<br/>validation, demo auth, audit]
+    API --> A[Bounded LangGraph agent<br/>read-only tool routing]
+
+    A --> DB[(PostgreSQL<br/>synthetic events and incidents)]
+    A --> RAG[Policy retrieval<br/>multilingual-e5-small]
+    RAG --> Q[(Qdrant<br/>fictional policy chunks)]
+    A --> ML[Isolation Forest<br/>daily behavioral features]
+
+    DB --> E[Typed evidence assembly]
+    Q --> E
+    ML --> E
+    E --> L[Qwen 3.5 4B<br/>native Ollama]
+    L --> V[Grounding and output validation]
+    V --> API
+    API --> UI
 ```
 
-Copy `.env.example` to `.env` only when overriding defaults. Keep local secrets and private inputs out of Git. `OLLAMA_BASE_URL` defaults to the macOS loopback address for host-native development; Compose configures FastAPI to use `host.docker.internal`.
+Streamlit communicates only with FastAPI. Docker Compose runs Streamlit, FastAPI, PostgreSQL, and Qdrant; Ollama stays native on macOS so the model can use Apple acceleration.
 
-## Run locally with Docker Compose
+## AI / ML Engineering
 
-Keep Ollama native on macOS, start it, and install the configured model:
+- **RAG:** PDF, Markdown, and text ingestion validates extraction, chunks documents, creates normalized `multilingual-e5-small` embeddings, and stores citation metadata in Qdrant. A fixed `0.805` relevance gate can return insufficient evidence.
+- **Local structured generation:** an Ollama provider abstraction calls configurable `qwen3.5:4b` with Pydantic schemas, bounded context/output, explicit timeouts, and safe dependency errors.
+- **Agent orchestration:** a five-node LangGraph chooses from six read-only tools. Application code derives identifiers and time filters from the request, caps execution at five graph steps and three tool calls, and rebuilds sources from returned evidence.
+- **Anomaly detection:** a persisted Isolation Forest scores 20 leakage-checked daily behavioral features. Training uses a chronological split; MLflow records local experiment parameters, metrics, and artifacts.
+- **Grounding:** observed records, ML analysis, policy context, interpretation, and recommendations remain separate. Generated identifiers, anomaly scores, anomaly flags, and write actions are validated or filtered.
+- **Evaluation:** versioned cases measure retrieval, structured generation, tool routing, provenance, deterministic facts, safety/failure behavior, anomaly detection, and latency without a paid model judge.
+
+## Key Engineering Features
+
+| Area | Why it exists |
+| --- | --- |
+| FastAPI + Pydantic | Versioned, validated API contracts with OpenAPI, safe errors, request bounds, demo roles, and dependency injection. |
+| PostgreSQL + SQLAlchemy + Alembic | Relational synthetic event/incident storage, parameterized bounded reads, audit records, and reproducible migrations. |
+| Qdrant | Local vector search with persistent policy chunk and citation metadata. |
+| Streamlit | A thin HTTP client that displays evidence categories without direct database or model access. |
+| Docker Compose | Reproducible local services, explicit bootstrap jobs, persistent volumes, and hardened application containers. |
+| MLflow | Local comparison and traceability for the two Isolation Forest training configurations. |
+| Structured logging | Correlated request, tool, retrieval, LLM, and inference timing with content-safe field allowlists. |
+| pytest + GitHub Actions | Deterministic API, RAG, ML, agent, frontend, integration, failure, and build checks with mocked Ollama in CI. |
+
+## Evaluation Results
+
+> **DEVELOPMENT EVALUATION ON SYNTHETIC DATA**
+>
+> These results describe a small local development suite. They do not estimate production SOC performance.
+
+| Layer | Measured result |
+| --- | --- |
+| Retrieval ranking | Recall@1 / @3 / @5 = **100% / 100% / 100%**; MRR = **1.000** |
+| Retrieval gate | Answerable acceptance = **34/39 (87.18%)**; unanswerable rejection = **8/8 (100%)** |
+| ML scenarios | Detected **5/6 (83.33%)**; false-positive rate **40/583 (6.86%)**; flagged precision **11.11%** |
+| ML ranking | Top-5 capture **2/6**; Top-10 capture **4/6** |
+| Integrated agent | Expected tool selection, provenance, policy citations, and anomaly score/flag fidelity: **20/20 each** |
+| Grounding | Unsupported identifier references: **0**; unsupported score references: **0** |
+| Local latency | Integrated median **29.563 s**; mean **26.620 s** |
+
+The suite contains 47 retrieval questions, 20 live integrated cases, 13 deterministic safety/failure contracts, and six predeclared fact checks. See the [evaluation methodology](docs/evaluation.md) and [generated results](evaluation/results/phase10-summary.md).
+
+## Interesting Failure Case: U105 Impossible Travel
+
+Synthetic event evidence records successful logins for U105 from Germany and Japan 15 minutes apart. The daily Isolation Forest returned:
+
+```text
+score   = -0.21107408822812324
+flagged = false
+```
+
+The model uses daily aggregate behavior. Although it includes country diversity and transition features, it does not explicitly calculate geographic travel velocity, so this sequence ranked 325th and was missed.
+
+The application preserves both facts: the event evidence shows the cross-country sequence, while the typed ML result remains `false`. The LLM is not allowed to rewrite the score or flag. This makes the limitation visible and demonstrates evidence separation rather than hiding a model failure.
+
+## Running Locally
+
+### Prerequisites
+
+- Apple silicon macOS and Docker Desktop with Compose v2, matching the validated environment;
+- native [Ollama](https://ollama.com/) with `qwen3.5:4b` installed;
+- Python 3.11 for local tests and utilities;
+- two distinct local demo tokens of at least 24 characters.
+
+### Quick start
 
 ```bash
 ollama pull qwen3.5:4b
-curl --fail http://127.0.0.1:11434/api/tags
-```
+cp .env.example .env
+# Edit .env: set PostgreSQL values and distinct DEMO_API_TOKEN / DEMO_READ_TOKEN.
 
-Create an ignored `.env` from `.env.example` and set PostgreSQL credentials plus distinct random admin and reader demo tokens. Then run the explicit bootstrap:
-
-```bash
 make docker-build
 make docker-infra
 make docker-migrate
@@ -41,114 +128,60 @@ make docker-train
 make docker-up
 ```
 
-Open <http://127.0.0.1:8501>. PostgreSQL and Qdrant use named volumes; normal startup does not reset, re-seed, re-embed, or retrain them. The API mounts the ignored model directory read-only, while the one-off trainer creates the trusted local artifact. See [local Docker deployment](docs/deployment-local.md) for configuration, health, cleanup, measured memory, failure behavior, and limitations.
+Open <http://127.0.0.1:8501> and enter a configured demo token. The first bootstrap downloads the embedding model, seeds 12,065 deterministic synthetic events, ingests seven fictional policy files, and trains the local anomaly artifact. Later `make docker-up` runs do not repeat bootstrap work.
 
-For Phase 2, set `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, `POSTGRES_PORT`, and matching `DATABASE_URL` in the ignored `.env`. Generate a unique local password; do not use any organization credentials. Then:
+See [local deployment](docs/deployment-local.md) for configuration, health checks, cleanup, native development, measured memory, and failure behavior.
 
-```bash
-docker compose up -d postgres
-docker compose ps
-.venv/bin/alembic upgrade head
-.venv/bin/python -m app.db.seed
-.venv/bin/alembic check
-```
-
-For Phase 3, set `QDRANT_PORT=6333` in `.env`, then:
+## Testing
 
 ```bash
-docker compose up -d postgres qdrant
-.venv/bin/python -m app.rag.ingest data/policies/synthetic --prune
-.venv/bin/python -m app.rag.evaluate --threshold 0.805
+.venv/bin/python -m pytest
+.venv/bin/ruff check .
+.venv/bin/ruff format --check .
 ```
 
-Both services bind their host ports to loopback by default. See [data model](docs/data-model.md), [synthetic data](docs/synthetic-data.md), and [local RAG](docs/rag.md) for behavior and validation.
+The Phase 14 checkpoint passed **154 tests**, with **1 live Ollama test intentionally opt-in and skipped**. PostgreSQL and Qdrant integration tests passed. GitHub Actions runs Ruff, ordinary tests with ephemeral PostgreSQL and mocked Ollama behavior, Alembic and Compose checks, and build-only application images. No hosted status badge is shown because this checkout has no configured GitHub remote.
 
-For Phase 4, install the official native Ollama macOS app and pull `qwen3.5:4b` (approximately 3.4 GB). Keep the model on the host. With Ollama available at `OLLAMA_BASE_URL`, run:
+## Project Structure
 
-```bash
-.venv/bin/python -m app.llm.smoke
-RUN_LIVE_OLLAMA=1 .venv/bin/python -m pytest -m live_ollama
+```text
+app/
+  api/          FastAPI routes, schemas, and services
+  agent/        LangGraph state, routing, tools, and evaluation
+  rag/          document ingestion, embeddings, Qdrant, retrieval
+  ml/           features, Isolation Forest, inference, MLflow tracking
+  llm/          provider contract and Ollama adapter
+  evaluation/   layered scoring and safety contracts
+frontend/       Streamlit HTTP client and presentation helpers
+data/policies/  public fictional policy corpus
+evaluation/     versioned cases and sanitized measured results
+tests/          unit, integration, API, agent, ML, RAG, and UI tests
+docs/           architecture, operations, security, evaluation, and demo guides
 ```
 
-See [LLM setup and limitations](docs/llm.md). The ordinary test suite mocks Ollama and does not need a downloaded model.
+## Limitations
 
-For Phase 5, set distinct random `DEMO_API_TOKEN` (admin) and `DEMO_READ_TOKEN` (reader) values in the ignored `.env`, then start the loopback API:
+- All security events and policies are synthetic or fictional.
+- Bearer tokens demonstrate authentication and two roles; they are not enterprise SSO.
+- The local 4B Qwen model is resource-aware but slow, with roughly 30-second median integrated latency.
+- The fixed retrieval gate rejects 5 of 39 answerable development questions.
+- The Isolation Forest produces false positives and misses the U105 impossible-travel sequence.
+- One evaluated password-policy response retrieved the correct evidence but generated generic prose.
+- The deployment is a loopback Docker Compose demonstration without production identity, TLS, managed secrets, high availability, or cloud infrastructure.
 
-```bash
-.venv/bin/uvicorn app.api.main:create_app --factory --host 127.0.0.1 --port 8000
-```
+## Skills Demonstrated
 
-Open `http://127.0.0.1:8000/api/v1/docs` for OpenAPI. See [API guide](docs/api.md) for routes, validation, auth, and a local smoke check. The demo tokens are not enterprise SSO.
-
-For the Phase 6 synthetic development evaluation, run `.venv/bin/python -m app.agent.evaluate` while PostgreSQL, Qdrant, and native Ollama are healthy. Detailed per-request results are written to ignored `work/` files. See [agent design and limits](docs/agent.md).
-
-For Phase 7, run `MLFLOW_DISABLE_AGENT_HINT=1 .venv/bin/python -m app.ml.train --clean`. It trains from the synthetic PostgreSQL events, evaluates against the separate ignored scenario file, writes the selected artifact under ignored `models/`, and records two local MLflow runs under ignored `work/`. See [ML design and measured results](docs/ml.md).
-
-For the Phase 8 integrated development evaluation, keep PostgreSQL, Qdrant, native Ollama, the policy collection, and the ignored model artifact available, then run:
-
-```bash
-.venv/bin/python -m app.agent.evaluate_integrated
-```
-
-The 20-case measured run is documented in [the Phase 8 checkpoint](docs/phase-8-checkpoint.md). Results are written under ignored `work/`.
-
-For Phase 9, keep FastAPI running and start the loopback Streamlit client:
-
-```bash
-ESIC_API_BASE_URL=http://127.0.0.1:8000/api/v1 \
-  .venv/bin/streamlit run frontend/app.py --server.address 127.0.0.1
-```
-
-Open `http://127.0.0.1:8501` and enter the reader or admin demo token in the password field. Streamlit communicates only with FastAPI; it does not connect directly to PostgreSQL, Qdrant, Ollama, LangGraph, or the ML service. See [the frontend guide](docs/frontend.md) and [Phase 9 checkpoint](docs/phase-9-checkpoint.md).
-
-## Development evaluation
-
-Run the layers that do not require Ollama, then the live local-model layers:
-
-```bash
-.venv/bin/python -m app.evaluation.run --offline
-.venv/bin/python -m app.evaluation.run --live
-```
-
-The suite uses synthetic events, fictional policies, the local `qwen3.5:4b` model, and a small development case set. It does not measure production SOC performance and does not calculate one overall accuracy score. Exact measured strengths and failures are generated in [the Phase 10 summary](evaluation/results/phase10-summary.md); methodology and reproduction details are in [the evaluation guide](docs/evaluation.md).
-
-`requirements-dev.lock` records the exact local Python environment, including transitive packages. Refresh it deliberately after dependency changes. `pyproject.toml` lists direct dependencies.
-
-## Continuous integration
-
-The workflow in `.github/workflows/ci.yml` runs on pull requests and pushes to `main`. It uses Python 3.11.13, an ephemeral PostgreSQL service, deterministic synthetic fixtures, mocked local-model behavior, Compose validation, and build-only application images. Native Ollama and live Qdrant tests are intentionally excluded. The hosted runner builds `amd64`; Phase 12 separately validated the runtime on an Apple M3 `arm64` host.
-
-No CI badge is included because this checkout has no configured GitHub remote. See [continuous integration](docs/ci.md) for the exact jobs, marker selection, supply-chain pinning, architecture boundary, and local reproduction commands.
+- **AI / GenAI:** RAG, local embeddings, vector search, local LLM inference, structured generation, LangGraph tool routing, grounding, provenance, and layered evaluation.
+- **Machine Learning:** leakage-aware feature engineering, chronological validation, Isolation Forest anomaly detection, model persistence, MLflow experiment tracking, latency and failure analysis.
+- **Backend / Data:** FastAPI, Pydantic, PostgreSQL, SQLAlchemy, Alembic, Qdrant, bounded REST APIs, authentication roles, and audit data.
+- **Engineering:** Docker, Docker Compose, pytest, GitHub Actions, structured logging, health checks, configuration management, security boundaries, and reproducible local workflows.
 
 ## Documentation
 
-- [Complete requirements](docs/project-specification.md)
-- [Architecture and environment findings](docs/phase-0-architecture.md)
+- [3–5 minute demo guide](docs/demo.md)
+- [Interview and CV guide](docs/interview-guide.md)
+- [Architecture and environment decisions](docs/phase-0-architecture.md)
+- [API contract](docs/api.md) and [agent design](docs/agent.md)
+- [RAG](docs/rag.md), [ML](docs/ml.md), and [evaluation](docs/evaluation.md)
+- [Security boundary](docs/security.md), [observability](docs/observability.md), and [local deployment](docs/deployment-local.md)
 - [Implementation checklist](docs/implementation-checklist.md)
-- [Phase 2 data model](docs/data-model.md)
-- [Synthetic data methodology](docs/synthetic-data.md)
-- [Local policy retrieval](docs/rag.md)
-- [Phase 3 checkpoint](docs/phase-3-checkpoint.md)
-- [Local LLM foundation](docs/llm.md)
-- [Phase 4 checkpoint](docs/phase-4-checkpoint.md)
-- [Versioned API](docs/api.md)
-- [Demo security boundary](docs/security.md)
-- [Phase 5 checkpoint](docs/phase-5-checkpoint.md)
-- [Read-only LangGraph agent](docs/agent.md)
-- [Phase 6 checkpoint](docs/phase-6-checkpoint.md)
-- [Synthetic anomaly model](docs/ml.md)
-- [Phase 7 checkpoint](docs/phase-7-checkpoint.md)
-- [Phase 8 checkpoint](docs/phase-8-checkpoint.md)
-- [Streamlit frontend](docs/frontend.md)
-- [Phase 9 checkpoint](docs/phase-9-checkpoint.md)
-- [Layered development evaluation](docs/evaluation.md)
-- [Phase 10 checkpoint](docs/phase-10-checkpoint.md)
-- [Generated Phase 10 results](evaluation/results/phase10-summary.md)
-- [Phase 11 observability](docs/observability.md)
-- [Phase 11 checkpoint](docs/phase-11-checkpoint.md)
-- [Local Docker Compose deployment](docs/deployment-local.md)
-- [Phase 12 checkpoint](docs/phase-12-checkpoint.md)
-- [Continuous integration](docs/ci.md)
-- [Phase 13 checkpoint](docs/phase-13-checkpoint.md)
-
-The full architecture, workflows, measured evaluation results, and demo instructions will be documented as the corresponding components are implemented and verified.
