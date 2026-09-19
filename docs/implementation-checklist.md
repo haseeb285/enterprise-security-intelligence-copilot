@@ -8,7 +8,7 @@ At every phase boundary: inspect changes, run relevant tests and Ruff, verify im
 - [x] **3 — RAG:** PDF/Markdown/TXT extraction, validation, chunking, deduplication, metadata, local embeddings, Qdrant upsert/retrieval, citations and relevance tests.
 - [x] **4 — Local LLM:** provider interface, native Ollama adapter, configurable model, availability and timeout errors, mocked contract tests and local smoke test.
 - [x] **5 — FastAPI:** versioned routes, schemas, validation, demo authentication/roles, safe errors, API tests and OpenAPI checks. See `phase-5-checkpoint.md`.
-- [ ] **6 — LangGraph agent:** typed state, selective evidence routing, approved tools, bounded graph, workflow/failure tests.
+- [x] **6 — LangGraph agent:** typed state, selective evidence routing, approved tools, bounded graph, workflow/failure tests. See `phase-6-checkpoint.md`.
 - [ ] **7 — ML and MLflow:** feature engineering, train/holdout evaluation, artifact persistence, inference, tracked experiment, synthetic-data caveat.
 - [ ] **8 — Integrated analysis:** event, anomaly and policy evidence assembly, grounded generation, source validation, insufficient-evidence paths, multi-tool tests.
 - [ ] **9 — Streamlit:** working dashboard, copilot, investigation, knowledge, ML, health and audit views.
@@ -20,4 +20,4 @@ At every phase boundary: inspect changes, run relevant tests and Ruff, verify im
 - [ ] **15 — Documentation and demo:** README, requested topic docs, reproducible policy and investigation walkthrough, measured results and clear limitations.
 - [ ] **16 — Final audit:** verify implemented/used/tested/documented matrix, run available stack checks, inspect repository for secrets/private data, resolve critical failures.
 
-**Phase gate:** Phase 5 was approved and completed. Wait for the user's direction before starting Phase 6.
+**Phase gate:** Phase 6 was approved and completed. Wait for the user's direction before starting Phase 7.

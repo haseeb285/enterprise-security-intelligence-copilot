@@ -13,6 +13,7 @@ from qdrant_client import QdrantClient
 from sqlalchemy import text
 
 from app.api.routes.data import router as data_router
+from app.api.routes.investigate import router as investigate_router
 from app.api.routes.knowledge import router as knowledge_router
 from app.api.schemas import HealthOut
 from app.core.settings import Settings, get_settings
@@ -147,6 +148,7 @@ def create_app(
 
     app.include_router(data_router, prefix="/api/v1")
     app.include_router(knowledge_router, prefix="/api/v1")
+    app.include_router(investigate_router, prefix="/api/v1")
     return app
 
 

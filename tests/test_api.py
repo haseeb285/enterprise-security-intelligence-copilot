@@ -280,3 +280,47 @@ def test_request_body_limit(api):
     client = api[0]
     response = client.post("/api/v1/retrieval", headers=auth(READER), json={"query": "a" * 9000})
     assert response.status_code == 413
+
+
+def test_investigation_api_auth_validation_and_audit(api):
+    from app.agent.schemas import RoutePlan, Synthesis
+
+    client, factory, _, llm, _ = api
+
+    def generate_structured(_prompt, schema, system=None):
+        if schema is RoutePlan:
+            return SimpleNamespace(
+                value=RoutePlan(
+                    classification="incident",
+                    tools=["get_incident"],
+                )
+            )
+        return SimpleNamespace(
+            value=Synthesis(
+                summary="Synthetic incident observed.",
+                interpretation="The incident record describes denied authentication.",
+                recommended_next_steps=["Review the incident record."],
+            )
+        )
+
+    llm.generate_structured = generate_structured
+    url = "/api/v1/investigate"
+    assert client.post(url, json={"request": "Investigate INC001"}).status_code == 401
+    assert client.post(url, headers=auth(ADMIN), json={"request": " "}).status_code == 422
+    assert client.post(url, headers=auth(ADMIN), json={"request": "x" * 9000}).status_code == 413
+    reader_result = client.post(url, headers=auth(READER), json={"request": "Investigate INC001"})
+    assert reader_result.status_code == 200
+    assert reader_result.json()["tool_results"]["get_incident"] == "forbidden"
+    assert reader_result.json()["observed_evidence"] == []
+    admin_result = client.post(url, headers=auth(ADMIN), json={"request": "Investigate INC001"})
+    assert admin_result.status_code == 200
+    assert admin_result.json()["sources"] == ["INC001"]
+    assert admin_result.json()["outcome"] == "complete"
+    schema = client.get("/api/v1/openapi.json").json()
+    assert schema["paths"][url]["post"]["security"] == [{"HTTPBearer": []}]
+    with factory() as session:
+        logs = list(session.scalars(select(AuditLog).where(AuditLog.action == "api_investigate")))
+    assert len(logs) == 2
+    assert '"selected_tools": ["get_incident"]' in logs[1].details
+    assert "Investigate INC001" not in logs[1].details
+    assert ADMIN not in logs[1].details

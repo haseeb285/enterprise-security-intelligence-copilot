@@ -4,7 +4,7 @@ Portfolio project for a **local, synthetic** security intelligence workflow. The
 
 ## Current status
 
-Phase 5 FastAPI boundary is complete: PostgreSQL and synthetic telemetry, local policy retrieval, a native macOS Ollama provider, and versioned read-only API routes with demo token roles, health, and audit logs. No RAG answer generation, ML model, agent, or UI is implemented yet. See [the phased checklist](docs/implementation-checklist.md), [API guide](docs/api.md), and [security notes](docs/security.md).
+Phase 6 adds a bounded, read-only LangGraph investigation agent over the existing synthetic telemetry and local policy retrieval. It selects relevant evidence tools, separates observed records from model interpretation, and exposes `POST /api/v1/investigate` through the demo-authenticated API. No ML model, MLflow, UI, or autonomous remediation is implemented. See [the phased checklist](docs/implementation-checklist.md), [agent guide](docs/agent.md), [API guide](docs/api.md), and [security notes](docs/security.md).
 
 ## Local setup
 
@@ -57,6 +57,8 @@ For Phase 5, set distinct random `DEMO_API_TOKEN` (admin) and `DEMO_READ_TOKEN` 
 
 Open `http://127.0.0.1:8000/api/v1/docs` for OpenAPI. See [API guide](docs/api.md) for routes, validation, auth, and a local smoke check. The demo tokens are not enterprise SSO.
 
+For the Phase 6 synthetic development evaluation, run `.venv/bin/python -m app.agent.evaluate` while PostgreSQL, Qdrant, and native Ollama are healthy. Detailed per-request results are written to ignored `work/` files. See [agent design and limits](docs/agent.md).
+
 `requirements-dev.lock` records the exact local Python environment, including transitive packages. Refresh it deliberately after dependency changes. `pyproject.toml` lists direct dependencies.
 
 ## Documentation
@@ -73,5 +75,7 @@ Open `http://127.0.0.1:8000/api/v1/docs` for OpenAPI. See [API guide](docs/api.m
 - [Versioned API](docs/api.md)
 - [Demo security boundary](docs/security.md)
 - [Phase 5 checkpoint](docs/phase-5-checkpoint.md)
+- [Read-only LangGraph agent](docs/agent.md)
+- [Phase 6 checkpoint](docs/phase-6-checkpoint.md)
 
 The full architecture, workflows, measured evaluation results, and demo instructions will be documented as the corresponding components are implemented and verified.

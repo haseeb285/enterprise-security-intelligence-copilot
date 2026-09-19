@@ -2,12 +2,34 @@
 
 import json
 from datetime import UTC, datetime
+from typing import Any
 
 from sqlalchemy.orm import Session
 
+from app.core.settings import Settings
 from app.db import repository
 from app.db.models import AuditLog
+from app.rag.embeddings import get_embedder
 from app.rag.service import RagService, Retrieval
+from app.rag.store import VectorStore
+
+
+def build_rag_service(settings: Settings, qdrant_client: Any) -> RagService:
+    """Lazily load the one cached embedder and reuse the lifespan Qdrant connection."""
+    embedder = get_embedder(settings.embedding_model)
+    store = VectorStore(
+        str(settings.qdrant_url),
+        settings.rag_collection,
+        embedder.dimension,
+        client=qdrant_client,
+    )
+    return RagService(
+        store,
+        embedder,
+        settings.rag_chunk_target_chars,
+        settings.rag_chunk_overlap_chars,
+        settings.rag_min_score,
+    )
 
 
 class ApiService:
@@ -15,7 +37,13 @@ class ApiService:
         self.session = session
 
     def audit(
-        self, action: str, resource_type: str, resource_id: str | None, result: str, role: str
+        self,
+        action: str,
+        resource_type: str,
+        resource_id: str | None,
+        result: str,
+        role: str,
+        metadata: dict[str, Any] | None = None,
     ) -> None:
         # Demo principals have no user record; never store credentials or queries.
         self.session.add(
@@ -26,7 +54,7 @@ class ApiService:
                 resource_type=resource_type,
                 resource_id=resource_id,
                 result=result,
-                details=json.dumps({"role": role}),
+                details=json.dumps({"role": role, **(metadata or {})}),
             )
         )
         self.session.commit()

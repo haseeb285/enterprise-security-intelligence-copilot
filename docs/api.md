@@ -23,6 +23,7 @@ Open `http://127.0.0.1:8000/api/v1/docs` for interactive OpenAPI or `/api/v1/ope
 | GET | `/api/v1/incidents` | Admin | Bounded list of synthetic incidents. |
 | GET | `/api/v1/incidents/{incident_id}` | Admin | One synthetic incident or 404. |
 | POST | `/api/v1/retrieval` | Reader or admin | Evidence-only retrieval with citation metadata and an insufficient-evidence flag. |
+| POST | `/api/v1/investigate` | Reader or admin | Bounded read-only LangGraph investigation; incident evidence requires admin. |
 
 Send `Authorization: Bearer <token>` for protected routes. The reader token accesses events and retrieval; the admin token additionally accesses incidents. No route accepts writes to source events or incidents. The role checks are dependency functions that can be replaced when a real identity provider is introduced.
 
@@ -43,3 +44,7 @@ Authenticated successful and not-found reads write an `audit_logs` record with a
 ```
 
 A one-off local smoke script used for Phase 5 is in ignored `work/phase5_smoke.py`. It generates temporary tokens in process, exercises live dependencies with FastAPI's test client, and prints only aggregate results. Ordinary automated tests use SQLite and fake Qdrant/Ollama/RAG services; they do not require network access or model downloads.
+
+## Phase 6 investigation route
+
+`POST /api/v1/investigate` accepts `{"request":"..."}` with 1–4,000 nonblank characters and a reader or admin bearer token. It runs the bounded read-only LangGraph agent described in [the agent guide](agent.md). Readers can receive policy and synthetic event evidence; the incident tool is admin-only. The response includes `observed_evidence` with source IDs and policy citations, a separate application-supplied `policy_context` list, model-authored `summary` and `interpretation`, selected tools, per-tool outcomes, sufficiency, safe error labels, and graph/tool-call counts. A valid request can return HTTP 200 with `outcome=insufficient_evidence` or a failure label; callers must inspect `outcome` and `evidence_sufficiency` rather than treating 200 as proof of a finding. Invalid body and missing token use the Phase 5 422/401 behavior. An audit record stores workflow metadata without the request text or evidence content.

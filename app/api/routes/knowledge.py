@@ -7,10 +7,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from app.api.dependencies import Principal, get_api_service, get_principal
 from app.api.schemas import ErrorOut, RetrievalIn, RetrievalOut
-from app.api.services import ApiService
-from app.rag.embeddings import get_embedder
-from app.rag.service import RagService
-from app.rag.store import VectorStore
+from app.api.services import ApiService, build_rag_service
 
 router = APIRouter(tags=["Knowledge"])
 
@@ -33,20 +30,7 @@ def retrieve(
     try:
         rag = request.app.state.rag_service
         if rag is None:
-            embedder = get_embedder(settings.embedding_model)
-            store = VectorStore(
-                str(settings.qdrant_url),
-                settings.rag_collection,
-                embedder.dimension,
-                client=request.app.state.qdrant,
-            )
-            rag = RagService(
-                store,
-                embedder,
-                settings.rag_chunk_target_chars,
-                settings.rag_chunk_overlap_chars,
-                settings.rag_min_score,
-            )
+            rag = build_rag_service(settings, request.app.state.qdrant)
         result = service.retrieval(rag, body.query, body.top_k)
         service.audit("api_retrieve_policy", "knowledge", None, "success", principal.role)
         return result

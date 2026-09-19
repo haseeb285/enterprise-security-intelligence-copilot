@@ -1,0 +1,169 @@
+{
+  "description": "Phase 6 local synthetic development evaluation; expected routes are reviewed hypotheses, never measured results.",
+  "cases": [
+    {
+      "id": "policy_password",
+      "category": "policy",
+      "request": "What does the password policy require for human accounts?",
+      "expected_tools": [
+        "search_policy"
+      ],
+      "expect_evidence": true
+    },
+    {
+      "id": "policy_mfa",
+      "category": "policy",
+      "request": "Does the remote access policy require MFA for VPN access?",
+      "expected_tools": [
+        "search_policy"
+      ],
+      "expect_evidence": true
+    },
+    {
+      "id": "policy_backup",
+      "category": "policy",
+      "request": "How long are daily backups retained under the backup policy?",
+      "expected_tools": [
+        "search_policy"
+      ],
+      "expect_evidence": true
+    },
+    {
+      "id": "events_failed_u104",
+      "category": "events",
+      "request": "Show failed logins for U104.",
+      "expected_tools": [
+        "search_security_events"
+      ],
+      "expect_evidence": true
+    },
+    {
+      "id": "events_user_u001",
+      "category": "events",
+      "request": "Summarize recent security activity for U001.",
+      "expected_tools": [
+        "get_user_events"
+      ],
+      "expect_evidence": true
+    },
+    {
+      "id": "events_firewall",
+      "category": "events",
+      "request": "Show recent firewall blocks in the synthetic events.",
+      "expected_tools": [
+        "search_security_events"
+      ],
+      "expect_evidence": true
+    },
+    {
+      "id": "event_detail",
+      "category": "events",
+      "request": "Investigate synthetic event EV000001.",
+      "expected_tools": [
+        "get_event"
+      ],
+      "expect_evidence": true
+    },
+    {
+      "id": "incident_001",
+      "category": "incident",
+      "request": "Investigate incident INC001.",
+      "expected_tools": [
+        "get_incident"
+      ],
+      "expect_evidence": true
+    },
+    {
+      "id": "incident_005",
+      "category": "incident",
+      "request": "What is recorded for incident INC005?",
+      "expected_tools": [
+        "get_incident"
+      ],
+      "expect_evidence": true
+    },
+    {
+      "id": "incident_events_004",
+      "category": "multi",
+      "request": "Investigate incident INC004 and show events linked to it.",
+      "expected_tools": [
+        "get_incident",
+        "search_security_events"
+      ],
+      "expect_evidence": true
+    },
+    {
+      "id": "policy_events_mfa",
+      "category": "multi",
+      "request": "What does the MFA policy require, and what failed login events were recorded for U104?",
+      "expected_tools": [
+        "search_policy",
+        "search_security_events"
+      ],
+      "expect_evidence": true
+    },
+    {
+      "id": "policy_incident_response",
+      "category": "multi",
+      "request": "What does the incident response policy require, and what is recorded for INC001?",
+      "expected_tools": [
+        "search_policy",
+        "get_incident"
+      ],
+      "expect_evidence": true
+    },
+    {
+      "id": "policy_user_activity",
+      "category": "multi",
+      "request": "What does the password policy require, and what recent activity is recorded for U001?",
+      "expected_tools": [
+        "search_policy",
+        "get_user_events"
+      ],
+      "expect_evidence": true
+    },
+    {
+      "id": "unknown_incident",
+      "category": "no_answer",
+      "request": "Investigate incident INC999.",
+      "expected_tools": [
+        "get_incident"
+      ],
+      "expect_evidence": false
+    },
+    {
+      "id": "unknown_event",
+      "category": "no_answer",
+      "request": "Investigate event EV999999.",
+      "expected_tools": [
+        "get_event"
+      ],
+      "expect_evidence": false
+    },
+    {
+      "id": "unknown_user",
+      "category": "no_answer",
+      "request": "Show failed logins for U999.",
+      "expected_tools": [
+        "search_security_events"
+      ],
+      "expect_evidence": false
+    },
+    {
+      "id": "unknown_policy",
+      "category": "no_answer",
+      "request": "What is the policy for quantum key escrow at this cooperative?",
+      "expected_tools": [
+        "search_policy"
+      ],
+      "expect_evidence": false
+    },
+    {
+      "id": "ambiguous",
+      "category": "ambiguous",
+      "request": "Help me with security.",
+      "expected_tools": [],
+      "expect_evidence": false
+    }
+  ]
+}
