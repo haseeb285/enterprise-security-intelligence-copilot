@@ -16,8 +16,8 @@ At every phase boundary: inspect changes, run relevant tests and Ruff, verify im
 - [x] **11 — Observability:** structured request/tool/retrieval/LLM/inference timing and failures, dependency health, audit review. See `observability.md` and `phase-11-checkpoint.md`.
 - [x] **12 — Docker:** arm64-compatible pinned images, Compose startup, persistent volumes, host Ollama access, reproducible smoke test. See `deployment-local.md` and `phase-12-checkpoint.md`.
 - [x] **13 — CI:** GitHub Actions lint/tests/build with mocked Ollama and no private services. See `ci.md` and `phase-13-checkpoint.md`.
-- [ ] **14 — Hardening:** unit/integration/API/RAG/agent tests, auth and edge cases, dependency and failure recovery checks.
+- [x] **14 — Hardening:** targeted API/agent/grounding/concurrency regressions, dependency failure review, portability fix, full validation, and current/history publication scan. See `phase-14-checkpoint.md`.
 - [ ] **15 — Documentation and demo:** README, requested topic docs, reproducible policy and investigation walkthrough, measured results and clear limitations.
 - [ ] **16 — Final audit:** verify implemented/used/tested/documented matrix, run available stack checks, inspect repository for secrets/private data, resolve critical failures.
 
-**Phase gate:** Phase 13 was approved and completed. Wait for the user's direction before starting Phase 14.
+**Phase gate:** Phase 14 was approved and completed. Wait for the user's direction before starting Phase 15.

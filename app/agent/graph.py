@@ -70,6 +70,10 @@ SCORE_RE = re.compile(
     r"(?:\s+(?:of|is)|\s*=)?\s*(-?\d+(?:\.\d+)?)",
     re.I,
 )
+ANOMALY_FLAG_RE = re.compile(
+    r"\b(?P<negative>not\s+)?flagged(?:\s+\bU\d{3}\b)?(?:\s+as)?\s+anomalous\b",
+    re.I,
+)
 
 
 def _safe_records(items: list[EvidenceRecord]) -> list[dict]:
@@ -348,6 +352,8 @@ class InvestigationAgent:
                 }
             allowed_scores = {item.anomaly_score for item in state["ml_evidence"]}
             filtered_score = False
+            allowed_flags = {item.flagged_anomalous for item in state["ml_evidence"]}
+            filtered_flag = False
 
             def verified_scores(text: str) -> str:
                 nonlocal filtered_score
@@ -361,17 +367,35 @@ class InvestigationAgent:
 
                 return SCORE_RE.sub(replace, text)
 
+            def verified_flags(text: str) -> str:
+                nonlocal filtered_flag
+
+                def replace(match: re.Match) -> str:
+                    nonlocal filtered_flag
+                    claimed = match.group("negative") is None
+                    if claimed in allowed_flags:
+                        return match.group(0)
+                    filtered_flag = True
+                    return "has the application-reported anomaly flag"
+
+                return ANOMALY_FLAG_RE.sub(replace, text)
+
+            def verified_ml_claims(text: str) -> str:
+                return verified_flags(verified_scores(text))
+
             synthesis = Synthesis(
-                summary=verified_scores(synthesis.summary),
-                interpretation=verified_scores(synthesis.interpretation),
+                summary=verified_ml_claims(synthesis.summary),
+                interpretation=verified_ml_claims(synthesis.interpretation),
                 recommended_next_steps=[
-                    verified_scores(step) for step in synthesis.recommended_next_steps
+                    verified_ml_claims(step) for step in synthesis.recommended_next_steps
                 ],
             )
             outcome = "complete" if state["sufficient"] else "partial_evidence"
             errors = state["errors"]
             if filtered_score:
                 errors = [*errors, "anomaly_score_reference_filtered"]
+            if filtered_flag:
+                errors = [*errors, "anomaly_flag_reference_filtered"]
             return {**update, "synthesis": synthesis, "errors": errors, "outcome": outcome}
         except LLMTimeout:
             return {

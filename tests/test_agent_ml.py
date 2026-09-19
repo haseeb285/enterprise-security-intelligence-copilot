@@ -307,3 +307,17 @@ def test_rounded_ml_analysis_score_is_filtered():
     ).run("What is the anomaly score for U105 on 2026-08-31?", "reader")
     assert "-0.211" not in result.interpretation
     assert "anomaly_score_reference_filtered" in result.errors
+
+
+def test_invented_anomaly_flag_is_filtered():
+    synthesis = Synthesis(
+        summary="The model flagged U105 as anomalous.",
+        interpretation="Review the typed ML evidence.",
+        recommended_next_steps=[],
+    )
+    result = InvestigationAgent(
+        Provider(["analyze_user_anomaly"], synthesis), IntegratedTools()
+    ).run("What is the anomaly score for U105 on 2026-08-31?", "reader")
+    assert result.ml_analysis[0].flagged_anomalous is False
+    assert "flagged U105 as anomalous" not in result.summary
+    assert "anomaly_flag_reference_filtered" in result.errors

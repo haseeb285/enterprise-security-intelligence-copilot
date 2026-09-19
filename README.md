@@ -8,10 +8,10 @@ Phase 13 adds GitHub Actions checks for the pinned Python environment, Ruff, ord
 
 ## Local setup
 
-Use Python 3.11 on arm64. On the inspected Mac, that is `/opt/anaconda3/bin/python3.11`.
+Use an arm64 Python 3.11 interpreter available on your system.
 
 ```bash
-/opt/anaconda3/bin/python3.11 -m venv .venv
+python3.11 -m venv .venv
 .venv/bin/python -m pip install -r requirements-dev.lock
 .venv/bin/python -m pytest
 .venv/bin/ruff check .

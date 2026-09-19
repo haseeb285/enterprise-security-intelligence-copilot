@@ -199,8 +199,14 @@ def test_startup_health_and_openapi(api):
 
 def test_auth_roles_and_events(api):
     client, factory, _, _, _ = api
-    assert client.get("/api/v1/events").status_code == 401
-    assert client.get("/api/v1/events", headers=auth("wrong")).status_code == 401
+    missing = client.get("/api/v1/events")
+    invalid = client.get("/api/v1/events", headers=auth("wrong"))
+    assert missing.status_code == 401
+    assert missing.json() == {"detail": "Authentication required"}
+    assert missing.headers["www-authenticate"] == "Bearer"
+    assert invalid.status_code == 401
+    assert invalid.json() == {"detail": "Invalid credentials"}
+    assert "wrong" not in invalid.text
     assert client.get("/api/v1/incidents", headers=auth(READER)).status_code == 403
     events = client.get("/api/v1/events", headers=auth(READER)).json()
     assert events["total"] == 1 and events["items"][0]["event_id"] == "EV000001"
@@ -329,6 +335,18 @@ def test_request_body_limit(api):
     client = api[0]
     response = client.post("/api/v1/retrieval", headers=auth(READER), json={"query": "a" * 9000})
     assert response.status_code == 413
+
+
+def test_malformed_json_is_safe(api):
+    client = api[0]
+    response = client.post(
+        "/api/v1/retrieval",
+        headers={**auth(READER), "Content-Type": "application/json"},
+        content=b'{"query":"postgresql://demo:private@localhost',
+    )
+    assert response.status_code == 422
+    assert response.json() == {"detail": "Invalid request input"}
+    assert "private" not in response.text
 
 
 def test_investigation_api_auth_validation_and_audit(api):
