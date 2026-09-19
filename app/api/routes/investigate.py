@@ -12,6 +12,7 @@ from app.agent.tools import AgentTools
 from app.api.dependencies import Principal, get_api_service, get_principal
 from app.api.schemas import ErrorOut
 from app.api.services import ApiService, build_rag_service
+from app.core.observability import ErrorCategory, emit, metrics
 from app.ml.service import AnomalyDetectionService
 
 router = APIRouter(tags=["Investigation"])
@@ -72,5 +73,13 @@ def investigate(
         )
     except SQLAlchemyError as exc:
         service.session.rollback()
+        metrics().increment("dependency_failures_total", label="postgresql")
+        emit(
+            "database",
+            "operation_failure",
+            dependency="postgresql",
+            outcome="failure",
+            error_category=ErrorCategory.database_unavailable,
+        )
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "PostgreSQL unavailable") from exc
     return result

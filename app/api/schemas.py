@@ -113,6 +113,14 @@ class HealthOut(BaseModel):
     dependencies: dict[str, str]
 
 
+class MetricsOut(BaseModel):
+    uptime_seconds: float
+    counters: dict[str, int]
+    labeled_counters: dict[str, dict[str, int]]
+    latency_ms: dict[str, dict[str, float | int]]
+    labeled_latency_ms: dict[str, dict[str, dict[str, float | int]]]
+
+
 class AuditOut(BaseModel):
     """Safe audit projection; internal details and credentials never cross the API."""
 

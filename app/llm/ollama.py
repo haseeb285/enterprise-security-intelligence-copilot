@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-import logging
 import time
 from typing import Any
 
 import httpx
 from pydantic import BaseModel, ValidationError
 
+from app.core.observability import ErrorCategory, emit, metrics
 from app.core.settings import Settings
 from app.llm.provider import (
     Generation,
@@ -21,8 +21,6 @@ from app.llm.provider import (
     StructuredGeneration,
     StructuredT,
 )
-
-LOGGER = logging.getLogger(__name__)
 
 
 class OllamaProvider:
@@ -88,6 +86,10 @@ class OllamaProvider:
             request["format"] = schema.model_json_schema()
         start = time.perf_counter()
         outcome = "failure"
+        error_category: ErrorCategory | None = None
+        output_tokens: int | None = None
+        registry = metrics()
+        registry.increment("llm_calls_total")
         try:
             response = self.client.post("/api/chat", json=request)
             if response.status_code == 404:
@@ -111,6 +113,9 @@ class OllamaProvider:
             if not isinstance(model, str) or not model:
                 raise LLMMalformedOutput("Ollama response omitted its model")
             outcome = "success"
+            output_tokens = (
+                payload.get("eval_count") if isinstance(payload.get("eval_count"), int) else None
+            )
             return Generation(
                 content.strip(),
                 model,
@@ -120,28 +125,49 @@ class OllamaProvider:
                 else None,
                 payload.get("eval_count") if isinstance(payload.get("eval_count"), int) else None,
             )
+        except LLMModelMissing:
+            error_category = ErrorCategory.llm_unavailable
+            registry.increment("dependency_failures_total", label="ollama")
+            raise
         except httpx.TimeoutException as exc:
+            error_category = ErrorCategory.llm_timeout
+            registry.increment("llm_timeouts_total")
             raise LLMTimeout(
                 f"Ollama inference timed out after {self.settings.llm_timeout_seconds} seconds"
             ) from exc
         except httpx.ConnectError as exc:
+            error_category = ErrorCategory.llm_unavailable
+            registry.increment("dependency_failures_total", label="ollama")
             raise LLMUnavailable("Ollama is unreachable; start native Ollama") from exc
         except httpx.RequestError as exc:
+            error_category = ErrorCategory.llm_unavailable
+            registry.increment("dependency_failures_total", label="ollama")
             raise LLMUnavailable("Ollama connection failed; check the native service") from exc
         except httpx.HTTPStatusError as exc:
+            error_category = ErrorCategory.llm_unavailable
             raise LLMInferenceError(
                 f"Ollama request failed with HTTP {exc.response.status_code}; "
                 "check the native Ollama logs and model memory"
             ) from exc
         except (ValueError, TypeError) as exc:
+            error_category = ErrorCategory.llm_validation_error
             raise LLMMalformedOutput("Ollama returned invalid JSON or response structure") from exc
         finally:
-            LOGGER.info(
-                "llm_request provider=ollama model=%s outcome=%s duration_ms=%.1f structured=%s",
-                self.model,
-                outcome,
-                (time.perf_counter() - start) * 1000,
-                schema is not None,
+            duration = (time.perf_counter() - start) * 1000
+            registry.observe("llm_latency_ms", duration)
+            if outcome != "success":
+                registry.increment("llm_failures_total")
+            emit(
+                "llm",
+                "inference_complete",
+                provider="ollama",
+                model=self.model,
+                outcome=outcome,
+                duration_ms=round(duration, 3),
+                structured=schema is not None,
+                output_tokens=output_tokens,
+                error_category=error_category
+                or (ErrorCategory.llm_unavailable if outcome != "success" else None),
             )
 
     def generate(self, prompt: str, system: str | None = None) -> Generation:
@@ -164,6 +190,14 @@ class OllamaProvider:
         try:
             value = schema.model_validate_json(generation.text)
         except ValidationError as exc:
-            LOGGER.warning("llm_structured_validation_failure provider=ollama model=%s", self.model)
+            metrics().increment("llm_failures_total")
+            emit(
+                "llm",
+                "structured_validation_failure",
+                provider="ollama",
+                model=self.model,
+                outcome="failure",
+                error_category=ErrorCategory.llm_validation_error,
+            )
             raise LLMMalformedOutput("Ollama structured output failed schema validation") from exc
         return StructuredGeneration(value, generation)

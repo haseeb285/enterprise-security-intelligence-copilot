@@ -3,10 +3,12 @@
 import re
 from collections.abc import Callable
 from math import ceil
+from time import perf_counter
 
 from app.agent.routing import required_tools
 from app.agent.schemas import EvidenceRecord, MLEvidence, ToolDecision, ToolName
 from app.api.services import ApiService
+from app.core.observability import ErrorCategory, emit, metrics
 from app.db.repository import EventFilters
 from app.ml.model import IncompatibleModelArtifact, ModelArtifactError
 from app.ml.service import (
@@ -46,6 +48,46 @@ class AgentTools:
         self.anomaly_service = anomaly_service
 
     def run(
+        self, decision: ToolDecision, request: str, role: str
+    ) -> list[EvidenceRecord | MLEvidence]:
+        name = decision.name.value
+        started = perf_counter()
+        registry = metrics()
+        registry.increment("tool_calls_total", label=name)
+        try:
+            result = self._run(decision, request, role)
+            emit(
+                "tool",
+                "execution_complete",
+                tool_name=name,
+                result_count=len(result),
+                duration_ms=round((perf_counter() - started) * 1000, 3),
+                outcome="success" if result else "empty",
+            )
+            return result
+        except Exception as exc:
+            registry.increment("tool_failures_total", label=name)
+            category = (
+                ErrorCategory.authorization_error
+                if isinstance(exc, ToolAccessError)
+                else ErrorCategory.validation_error
+                if isinstance(exc, ToolInputError)
+                else ErrorCategory.tool_failure
+            )
+            emit(
+                "tool",
+                "execution_complete",
+                tool_name=name,
+                result_count=0,
+                duration_ms=round((perf_counter() - started) * 1000, 3),
+                outcome="failure",
+                error_category=category,
+            )
+            raise
+        finally:
+            registry.observe("tool_latency_ms", (perf_counter() - started) * 1000, label=name)
+
+    def _run(
         self, decision: ToolDecision, request: str, role: str
     ) -> list[EvidenceRecord | MLEvidence]:
         if decision.name == ToolName.search_security_events:

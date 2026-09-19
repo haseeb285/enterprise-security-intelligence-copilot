@@ -10,6 +10,7 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
+from app.core.observability import OperationalMetrics, observability_scope
 from app.db.models import Base, SecurityEvent, User
 from app.ml.evaluation import evaluate_holdout, load_ground_truth
 from app.ml.features import (
@@ -222,6 +223,24 @@ def test_inference_result_and_error_paths(tmp_path):
         missing = AnomalyDetectionService(session, tmp_path / "missing.joblib")
         with pytest.raises(FileNotFoundError):
             missing.analyze_user("U001", START, START + timedelta(days=1))
+    finally:
+        session.close()
+        engine.dispose()
+
+
+def test_inference_records_latency_and_failures(tmp_path):
+    engine, session, path = _service(tmp_path)
+    try:
+        registry = OperationalMetrics()
+        service = AnomalyDetectionService(session, path)
+        with observability_scope(registry=registry):
+            service.analyze_user("U001", START, START + timedelta(days=1))
+            with pytest.raises(UnknownUserError):
+                service.analyze_user("U999", START, START + timedelta(days=1))
+        snapshot = registry.snapshot()
+        assert snapshot["counters"]["ml_inference_calls_total"] == 2
+        assert snapshot["counters"]["ml_inference_failures_total"] == 1
+        assert snapshot["latency_ms"]["ml_inference_latency_ms"]["count"] == 2
     finally:
         session.close()
         engine.dispose()

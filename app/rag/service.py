@@ -5,7 +5,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
+from time import perf_counter
 
+from app.core.observability import ErrorCategory, emit, metrics
 from app.rag.documents import SUPPORTED, chunk_document, load_document
 
 
@@ -108,22 +110,58 @@ class RagService:
             raise ValueError("Query must have 1–4000 characters")
         if not 1 <= top_k <= 10:
             raise ValueError("top_k must be between 1 and 10")
-        self.store.ready()
-        self.store.validate_configuration(self.embedder.name, self.target, self.overlap)
-        points = self.store.search(self.embedder.query(query), top_k)
-        evidence = tuple(
-            Evidence(
-                text=point.payload["text"],
-                score=point.score,
-                chunk_id=point.payload["chunk_id"],
-                citation=Citation(
-                    point.payload["document_name"],
-                    point.payload["source"],
-                    point.payload["section"],
-                    point.payload.get("page"),
-                ),
+        started = perf_counter()
+        registry = metrics()
+        registry.increment("retrieval_calls_total")
+        try:
+            self.store.ready()
+            self.store.validate_configuration(self.embedder.name, self.target, self.overlap)
+            points = self.store.search(self.embedder.query(query), top_k)
+            evidence = tuple(
+                Evidence(
+                    text=point.payload["text"],
+                    score=point.score,
+                    chunk_id=point.payload["chunk_id"],
+                    citation=Citation(
+                        point.payload["document_name"],
+                        point.payload["source"],
+                        point.payload["section"],
+                        point.payload.get("page"),
+                    ),
+                )
+                for point in points
+                if point.score >= self.threshold
             )
-            for point in points
-            if point.score >= self.threshold
-        )
-        return Retrieval(evidence, not bool(evidence))
+            insufficient = not bool(evidence)
+            if insufficient:
+                registry.increment("retrieval_insufficient_total")
+            emit(
+                "retrieval",
+                "retrieval_complete",
+                top_k=top_k,
+                result_count=len(evidence),
+                insufficient_evidence=insufficient,
+                highest_score=round(max((point.score for point in points), default=0.0), 4),
+                collection=getattr(self.store, "collection", "configured"),
+                embedding_model=self.embedder.name,
+                duration_ms=round((perf_counter() - started) * 1000, 3),
+                outcome="insufficient" if insufficient else "success",
+                error_category=ErrorCategory.insufficient_observation if insufficient else None,
+            )
+            return Retrieval(evidence, insufficient)
+        except Exception:
+            registry.increment("dependency_failures_total", label="qdrant")
+            emit(
+                "retrieval",
+                "retrieval_complete",
+                top_k=top_k,
+                result_count=0,
+                collection=getattr(self.store, "collection", "configured"),
+                embedding_model=self.embedder.name,
+                duration_ms=round((perf_counter() - started) * 1000, 3),
+                outcome="failure",
+                error_category=ErrorCategory.vector_store_unavailable,
+            )
+            raise
+        finally:
+            registry.observe("retrieval_latency_ms", (perf_counter() - started) * 1000)

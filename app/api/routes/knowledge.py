@@ -8,6 +8,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from app.api.dependencies import Principal, get_api_service, get_principal
 from app.api.schemas import ErrorOut, RetrievalIn, RetrievalOut
 from app.api.services import ApiService, build_rag_service
+from app.core.observability import ErrorCategory, emit, metrics
 
 router = APIRouter(tags=["Knowledge"])
 
@@ -36,12 +37,28 @@ def retrieve(
         return result
     except SQLAlchemyError as exc:
         service.session.rollback()
+        metrics().increment("dependency_failures_total", label="postgresql")
+        emit(
+            "database",
+            "operation_failure",
+            dependency="postgresql",
+            outcome="failure",
+            error_category=ErrorCategory.database_unavailable,
+        )
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "PostgreSQL unavailable") from exc
     except Exception as exc:
         try:
             service.audit("api_retrieve_policy", "knowledge", None, "failure", principal.role)
         except SQLAlchemyError as audit_exc:
             service.session.rollback()
+            metrics().increment("dependency_failures_total", label="postgresql")
+            emit(
+                "database",
+                "operation_failure",
+                dependency="postgresql",
+                outcome="failure",
+                error_category=ErrorCategory.database_unavailable,
+            )
             raise HTTPException(
                 status.HTTP_503_SERVICE_UNAVAILABLE, "PostgreSQL unavailable"
             ) from audit_exc

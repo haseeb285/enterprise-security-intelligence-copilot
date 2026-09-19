@@ -189,6 +189,29 @@ def test_health_parsing_is_public():
     assert degraded.status == "degraded" and degraded.dependencies["ollama"] == "model_missing"
 
 
+def test_admin_metrics_parsing():
+    payload = {
+        "uptime_seconds": 12.5,
+        "counters": {"api_requests_total": 3},
+        "labeled_counters": {"tool_calls_total": {"get_event": 1}},
+        "latency_ms": {
+            "api_request_latency_ms": {
+                "count": 3,
+                "mean_ms": 2.0,
+                "min_ms": 1.0,
+                "max_ms": 3.0,
+            }
+        },
+        "labeled_latency_ms": {},
+    }
+    client = ApiClient(
+        BASE, TOKEN, transport=httpx.MockTransport(lambda _request: response(200, payload))
+    )
+    metrics = client.metrics()
+    assert metrics.counters["api_requests_total"] == 3
+    assert metrics.latency_ms["api_request_latency_ms"]["mean_ms"] == 2.0
+
+
 def test_investigation_ml_and_policy_contract_parsing():
     client = ApiClient(
         BASE,
@@ -249,3 +272,47 @@ def test_streamlit_app_loads_without_live_backend():
     app = AppTest.from_file(path, default_timeout=10).run()
     assert not app.exception
     assert app.title[0].value == "Security overview"
+
+
+def test_system_health_renders_admin_process_metrics(monkeypatch):
+    def fake_request(_self, _method, path, **_kwargs):
+        if path == "/health":
+            return {
+                "status": "ready",
+                "dependencies": {
+                    "application": "ok",
+                    "postgresql": "ok",
+                    "qdrant": "ok",
+                    "ollama": "ok",
+                },
+            }
+        assert path == "/metrics"
+        return {
+            "uptime_seconds": 30.0,
+            "counters": {
+                "api_requests_total": 8,
+                "api_errors_total": 1,
+                "investigations_total": 2,
+                "llm_calls_total": 4,
+            },
+            "labeled_counters": {},
+            "latency_ms": {
+                "api_request_latency_ms": {
+                    "count": 8,
+                    "mean_ms": 4.0,
+                    "min_ms": 1.0,
+                    "max_ms": 9.0,
+                }
+            },
+            "labeled_latency_ms": {},
+        }
+
+    monkeypatch.setattr(ApiClient, "_request", fake_request)
+    path = Path(__file__).resolve().parents[1] / "frontend/app.py"
+    app = AppTest.from_file(path, default_timeout=10).run()
+    app.sidebar.text_input[1].set_value(TOKEN)
+    app.sidebar.radio[0].set_value("System Health")
+    app.run()
+    assert not app.exception
+    assert app.title[0].value == "System health"
+    assert [item.value for item in app.metric] == ["8", "1", "2", "4"]

@@ -129,6 +129,40 @@ def api():
     engine.dispose()
 
 
+def test_request_correlation_and_admin_metrics(api):
+    client, factory, *_ = api
+    response = client.get("/api/v1/health", headers={"X-Request-ID": "phase11-live"})
+    assert response.headers["X-Request-ID"] == "phase11-live"
+    generated = client.get(
+        "/api/v1/health", headers={"X-Request-ID": "unsafe request id with spaces"}
+    ).headers["X-Request-ID"]
+    assert generated != "unsafe request id with spaces" and len(generated) == 32
+
+    assert client.get("/api/v1/metrics").status_code == 401
+    assert client.get("/api/v1/metrics", headers=auth(READER)).status_code == 403
+    response = client.get("/api/v1/metrics", headers=auth(ADMIN))
+    assert response.status_code == 200
+    assert response.json()["counters"]["api_requests_total"] >= 4
+    assert "api_request_latency_ms" in response.json()["latency_ms"]
+    with factory() as session:
+        actions = list(
+            session.scalars(select(AuditLog.action).where(AuditLog.action == "api_get_metrics"))
+        )
+    # Internal request/component telemetry does not create business audit entries.
+    assert actions == ["api_get_metrics"]
+
+
+def test_early_request_rejection_is_correlated(api):
+    client, *_ = api
+    response = client.post(
+        "/api/v1/investigate",
+        content=b"x" * 8193,
+        headers={"X-Request-ID": "oversized-1", "Content-Type": "application/json"},
+    )
+    assert response.status_code == 413
+    assert response.headers["X-Request-ID"] == "oversized-1"
+
+
 def auth(token):
     return {"Authorization": f"Bearer {token}"}
 
@@ -150,6 +184,7 @@ def test_startup_health_and_openapi(api):
     assert schema["paths"]["/api/v1/events"]["get"]["security"] == [{"HTTPBearer": []}]
     assert schema["paths"]["/api/v1/incidents"]["get"]["security"] == [{"HTTPBearer": []}]
     assert schema["paths"]["/api/v1/audit"]["get"]["security"] == [{"HTTPBearer": []}]
+    assert schema["paths"]["/api/v1/metrics"]["get"]["security"] == [{"HTTPBearer": []}]
     assert "/api/v1/chat" not in schema["paths"]
     qdrant.fail = True
     llm.model_available = False

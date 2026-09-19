@@ -3,10 +3,12 @@
 import re
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
+from time import perf_counter
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.core.observability import ErrorCategory, emit, metrics
 from app.db.models import SecurityEvent, User
 from app.ml.features import build_observation
 from app.ml.model import (
@@ -71,6 +73,59 @@ class AnomalyDetectionService:
         return normalized_start, normalized_end
 
     def analyze_user(self, user_id: str, start: datetime, end: datetime) -> AnomalyResult:
+        started = perf_counter()
+        registry = metrics()
+        registry.increment("ml_inference_calls_total")
+        try:
+            result = self._analyze_user(user_id, start, end)
+            emit(
+                "ml",
+                "inference_complete",
+                model_version=result.model_version,
+                anomaly_flag=result.flagged_anomalous,
+                observation_available=True,
+                duration_ms=round((perf_counter() - started) * 1000, 3),
+                outcome="success",
+            )
+            return result
+        except (UnknownUserError, InsufficientHistoryError):
+            registry.increment("ml_inference_failures_total")
+            emit(
+                "ml",
+                "inference_complete",
+                observation_available=False,
+                duration_ms=round((perf_counter() - started) * 1000, 3),
+                outcome="insufficient",
+                error_category=ErrorCategory.insufficient_observation,
+            )
+            raise
+        except (FileNotFoundError, IncompatibleModelArtifact, ModelArtifactError):
+            registry.increment("ml_inference_failures_total")
+            registry.increment("dependency_failures_total", label="model_artifact")
+            emit(
+                "ml",
+                "inference_complete",
+                observation_available=False,
+                duration_ms=round((perf_counter() - started) * 1000, 3),
+                outcome="failure",
+                error_category=ErrorCategory.model_artifact_unavailable,
+            )
+            raise
+        except Exception:
+            registry.increment("ml_inference_failures_total")
+            emit(
+                "ml",
+                "inference_complete",
+                observation_available=False,
+                duration_ms=round((perf_counter() - started) * 1000, 3),
+                outcome="failure",
+                error_category=ErrorCategory.internal_error,
+            )
+            raise
+        finally:
+            registry.observe("ml_inference_latency_ms", (perf_counter() - started) * 1000)
+
+    def _analyze_user(self, user_id: str, start: datetime, end: datetime) -> AnomalyResult:
         if not re.fullmatch(r"U\d{3}", user_id):
             raise ValueError("user_id must match U###")
         window_start, window_end = self._window(start, end)

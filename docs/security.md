@@ -6,7 +6,13 @@ Input is constrained by Pydantic models and route parameters, including ID patte
 
 Meaningful authenticated reads append audit entries in PostgreSQL. Each entry has an action, resource category, optional synthetic resource ID, outcome, and role. Demo principals are not mapped to synthetic `users`, so `actor_user_id` is null. Query text, retrieved policy content, event payloads, bearer tokens, and connection strings are not written to audit details. The admin-only audit API returns a bounded safe projection and omits its internal details payload. The seed guard tolerates added audit entries while checking the seeded data counts. A seed reset intentionally replaces the local synthetic dataset and audit rows.
 
-For a real deployment, replace demo bearer tokens with OAuth2/OIDC through Entra ID, Keycloak, or another identity provider. Add managed user/group authorization, token lifecycle and revocation, TLS, rate limiting, request IDs, centralized tamper-resistant audit storage, structured operational logging, secret management, provenance and access controls for private policy corpora, and an explicit deployment threat model. These controls are outside Phase 5. No production security or real-world detection performance is claimed.
+For a real deployment, replace demo bearer tokens with OAuth2/OIDC through Entra ID, Keycloak, or another identity provider. Add managed user/group authorization, token lifecycle and revocation, TLS, rate limiting, centralized tamper-resistant audit and log storage, secret management, provenance and access controls for private policy corpora, and an explicit deployment threat model. No production security or real-world detection performance is claimed.
+
+## Phase 11 operational telemetry boundary
+
+Request IDs, JSON logs, and in-process metrics use explicit field and label allowlists. They record timings, counts, component names, safe outcomes, model/version names, aggregate result counts, and stable error categories. They omit submitted requests, prompts, system instructions, evidence text and attributes, generated prose, credentials, connection strings, exception messages, local paths, and hidden reasoning. Unsafe caller-supplied request IDs are replaced.
+
+Operational telemetry and the business audit trail have different purposes. Internal spans never write audit rows. Admin access to the aggregate metrics route is itself an audited API action. The local logger and process registry are not tamper-resistant or durable and do not replace a production monitoring and audit architecture.
 
 ## Phase 6 agent boundary
 

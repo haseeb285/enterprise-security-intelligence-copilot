@@ -5,6 +5,7 @@ import json
 import httpx
 import pytest
 
+from app.core.observability import OperationalMetrics, observability_scope
 from app.core.settings import Settings
 from app.llm.ollama import OllamaProvider
 from app.llm.provider import (
@@ -87,6 +88,29 @@ def test_generation_request_and_result(settings):
     assert result.load_seconds == 1
     assert result.output_tokens == 8
     assert result.duration_seconds >= 0
+
+
+def test_generation_records_bounded_metrics(settings):
+    registry = OperationalMetrics()
+    with observability_scope(registry=registry):
+        provider(settings, lambda _request: httpx.Response(200, json=answer())).generate("Safe")
+    snapshot = registry.snapshot()
+    assert snapshot["counters"]["llm_calls_total"] == 1
+    assert snapshot["latency_ms"]["llm_latency_ms"]["count"] == 1
+
+
+def test_timeout_records_safe_failure_metrics(settings):
+    registry = OperationalMetrics()
+
+    def timeout(_request):
+        raise httpx.ReadTimeout("private upstream detail")
+
+    with observability_scope(registry=registry), pytest.raises(LLMTimeout):
+        provider(settings, timeout).generate("PRIVATE_REQUEST")
+    snapshot = registry.snapshot()
+    assert snapshot["counters"]["llm_calls_total"] == 1
+    assert snapshot["counters"]["llm_failures_total"] == 1
+    assert snapshot["counters"]["llm_timeouts_total"] == 1
 
 
 def test_structured_schema_and_validation(settings):
@@ -180,7 +204,12 @@ def test_request_log_omits_prompt_and_response(settings, caplog):
     p = provider(settings, lambda r: httpx.Response(200, json=answer("PRIVATE_OUTPUT_MARKER")))
     with caplog.at_level("INFO"):
         p.generate(secret_marker)
-    assert "provider=ollama" in caplog.text
+    event = next(
+        record.structured_event for record in caplog.records if hasattr(record, "structured_event")
+    )
+    assert event["component"] == "llm"
+    assert event["provider"] == "ollama"
+    assert event["output_tokens"] == 8
     assert secret_marker not in caplog.text
     assert "PRIVATE_OUTPUT_MARKER" not in caplog.text
 

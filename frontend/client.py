@@ -23,6 +23,15 @@ class HealthResponse(BaseModel):
     dependencies: dict[str, str]
 
 
+class MetricsResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    uptime_seconds: float
+    counters: dict[str, int]
+    labeled_counters: dict[str, dict[str, int]]
+    latency_ms: dict[str, dict[str, float | int]]
+    labeled_latency_ms: dict[str, dict[str, dict[str, float | int]]]
+
+
 class PageResponse(BaseModel, Generic[T]):
     model_config = ConfigDict(extra="forbid")
     items: list[T]
@@ -219,6 +228,9 @@ class ApiClient:
     def health(self) -> HealthResponse:
         data = self._request("GET", "/health", protected=False, accepted_statuses={503})
         return HealthResponse.model_validate(data)
+
+    def metrics(self) -> MetricsResponse:
+        return MetricsResponse.model_validate(self._request("GET", "/metrics"))
 
     def events(
         self, filters: dict[str, Any] | None = None, *, limit: int = 25, offset: int = 0

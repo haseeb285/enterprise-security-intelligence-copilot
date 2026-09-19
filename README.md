@@ -4,7 +4,7 @@ Portfolio project for a **local, synthetic** security intelligence workflow. The
 
 ## Current status
 
-Phase 10 adds a reproducible layered development evaluation over retrieval, structured generation, routing, ML, integrated grounding, safety/failure behavior, and latency. It reports each layer separately and retains retrieval gate false negatives, the ML false-positive rate, the U105 impossible-travel miss, and local inference latency. No production performance or autonomous remediation is claimed. See [the evaluation guide](docs/evaluation.md), [generated measured summary](evaluation/results/phase10-summary.md), and [the phased checklist](docs/implementation-checklist.md).
+Phase 11 adds request correlation, content-safe JSON logs, bounded process-local metrics, component latency/failure tracking, and an admin metrics view. It preserves the separate PostgreSQL audit trail and adds no monitoring service. No production performance or autonomous remediation is claimed. See [the observability guide](docs/observability.md), [layered evaluation guide](docs/evaluation.md), and [the phased checklist](docs/implementation-checklist.md).
 
 ## Local setup
 
@@ -115,5 +115,7 @@ The suite uses synthetic events, fictional policies, the local `qwen3.5:4b` mode
 - [Layered development evaluation](docs/evaluation.md)
 - [Phase 10 checkpoint](docs/phase-10-checkpoint.md)
 - [Generated Phase 10 results](evaluation/results/phase10-summary.md)
+- [Phase 11 observability](docs/observability.md)
+- [Phase 11 checkpoint](docs/phase-11-checkpoint.md)
 
 The full architecture, workflows, measured evaluation results, and demo instructions will be documented as the corresponding components are implemented and verified.

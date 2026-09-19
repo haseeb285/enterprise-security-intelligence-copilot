@@ -331,6 +331,30 @@ def system_health(client: ApiClient) -> None:
         label, value = st.columns([2, 1])
         label.write(name.replace("_", " ").title())
         value.write("✅ Ready" if state == "ok" else f"⚠️ {safe_text(state)}")
+    st.subheader("Process metrics")
+    st.caption("Admin-only bounded counters and latency summaries for this API process.")
+    try:
+        snapshot = client.metrics()
+    except ApiClientError as exc:
+        if exc.kind in {"authentication_required", "unauthorized", "forbidden"}:
+            st.caption("Enter the admin demo token to view operational metrics.")
+        else:
+            show_error(exc)
+        return
+    cols = st.columns(4)
+    cols[0].metric("API requests", snapshot.counters.get("api_requests_total", 0))
+    cols[1].metric("API failures", snapshot.counters.get("api_errors_total", 0))
+    cols[2].metric("Investigations", snapshot.counters.get("investigations_total", 0))
+    cols[3].metric("LLM calls", snapshot.counters.get("llm_calls_total", 0))
+    latency_rows = [
+        {
+            "operation": name.removesuffix("_latency_ms").replace("_", " ").title(),
+            **values,
+        }
+        for name, values in snapshot.latency_ms.items()
+    ]
+    if latency_rows:
+        st.dataframe(latency_rows, width="stretch", hide_index=True)
 
 
 def audit_about(client: ApiClient) -> None:

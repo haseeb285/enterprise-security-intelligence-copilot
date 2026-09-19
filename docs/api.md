@@ -23,6 +23,7 @@ Open `http://127.0.0.1:8000/api/v1/docs` for interactive OpenAPI or `/api/v1/ope
 | GET | `/api/v1/incidents` | Admin | Bounded list of synthetic incidents. |
 | GET | `/api/v1/incidents/{incident_id}` | Admin | One synthetic incident or 404. |
 | GET | `/api/v1/audit` | Admin | Bounded newest-first safe audit metadata; internal detail payloads are omitted. |
+| GET | `/api/v1/metrics` | Admin | Process-local bounded counters and latency summaries without content or IDs. |
 | POST | `/api/v1/retrieval` | Reader or admin | Evidence-only retrieval with citation metadata and an insufficient-evidence flag. |
 | POST | `/api/v1/investigate` | Reader or admin | Bounded read-only LangGraph investigation; incident evidence requires admin. |
 
@@ -35,6 +36,8 @@ Responses use JSON. Missing/invalid token returns 401; insufficient role 403; ab
 Authenticated successful and not-found reads write an `audit_logs` record with action, resource type, optional synthetic ID, result, and demo role. Retrieval failures also log a failure when PostgreSQL remains available. Audit details do not include tokens, queries, policy text, or event payloads. Invalid input and unauthenticated requests do not write audit rows. The audit table's nullable user foreign key remains null for demo-token principals.
 
 The Phase 9 Streamlit client uses only these HTTP routes. Its audit page requires the admin token and receives only `audit_id`, timestamp, action, resource type, optional synthetic resource ID, and result. The API never sends the internal audit `details` payload to the frontend.
+
+Every response includes `X-Request-ID`. A caller may supply a safe 1–64 character identifier using letters, digits, `.`, `_`, and `-`; unsafe or missing values are replaced. Structured component logs carry the same identifier. The metrics endpoint is admin-only, process-local, resets on restart, and is described in [the observability guide](observability.md).
 
 ## Quick checks
 

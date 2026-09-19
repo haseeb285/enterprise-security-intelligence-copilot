@@ -7,6 +7,7 @@ from types import SimpleNamespace
 import pytest
 from reportlab.pdfgen import canvas
 
+from app.core.observability import OperationalMetrics, observability_scope
 from app.core.settings import Settings
 from app.rag.documents import chunk_document, load_document
 from app.rag.service import RagService
@@ -164,6 +165,20 @@ def test_ingest_replacement_prune_and_retrieval(tmp_path):
     path.unlink()
     service.ingest(tmp_path, prune=True)
     assert not store.points
+
+
+def test_retrieval_records_latency_and_insufficient_result(tmp_path):
+    path = tmp_path / "policy.md"
+    path.write_text("# Policy\n## Rule\nUse security keys.")
+    service = RagService(FakeStore(), FakeEmbedder(), threshold=0.95)
+    service.ingest(tmp_path)
+    registry = OperationalMetrics()
+    with observability_scope(registry=registry):
+        assert service.retrieve("keys").insufficient_evidence
+    snapshot = registry.snapshot()
+    assert snapshot["counters"]["retrieval_calls_total"] == 1
+    assert snapshot["counters"]["retrieval_insufficient_total"] == 1
+    assert snapshot["latency_ms"]["retrieval_latency_ms"]["count"] == 1
 
 
 def test_settings_constraints():

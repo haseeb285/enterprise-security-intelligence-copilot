@@ -20,7 +20,7 @@ Open `http://127.0.0.1:8501`. Enter a local reader or admin demo bearer token in
 - **Security Events:** bounded filters, pagination, and record details from the simulated SIEM routes.
 - **Knowledge Base:** evidence-only policy retrieval with document, section, source, page, chunk, and relevance metadata.
 - **ML Analytics:** typed anomaly evidence through the investigation API, including the exact score, flag, window, features, observations, model version, provenance, and synthetic-data warning.
-- **System Health:** public coarse status for the application, PostgreSQL, Qdrant, and Ollama.
+- **System Health:** public coarse dependency status plus admin-only process counters and latency summaries from FastAPI.
 - **Audit / About:** an admin-only bounded safe audit view plus architecture and demonstration limitations.
 
 The investigation call is intentionally non-streaming and uses a 210-second client timeout because local LangGraph and Ollama runs measured about 29 seconds in Phase 8. Other calls use 15 seconds. The client maps timeouts, connection failures, invalid JSON, 401, 403, 404, 422, and 503 responses to short messages without exposing backend response details.

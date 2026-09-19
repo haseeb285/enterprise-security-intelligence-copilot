@@ -2,6 +2,7 @@
 
 import json
 import re
+from time import perf_counter
 from typing import TypedDict
 
 from langgraph.graph import END, START, StateGraph
@@ -17,6 +18,7 @@ from app.agent.schemas import (
     ToolDecision,
 )
 from app.agent.tools import AgentTools, ToolAccessError, ToolExecutionError, ToolInputError
+from app.core.observability import ErrorCategory, emit, metrics
 from app.llm.provider import LLMError, LLMProvider, LLMTimeout
 
 ROUTE_SYSTEM = (
@@ -175,8 +177,60 @@ class InvestigationAgent:
             "tool_calls": 0,
             "outcome": "insufficient_evidence",
         }
-        state = self.graph.invoke(initial, config={"recursion_limit": 8})
-        return AgentResponse.model_validate(state["response"])
+        started = perf_counter()
+        registry = metrics()
+        registry.increment("investigations_total")
+        try:
+            state = self.graph.invoke(initial, config={"recursion_limit": 8})
+            response = AgentResponse.model_validate(state["response"])
+            failed = response.outcome in {"routing_failed", "synthesis_failed", "limit_exceeded"}
+            if failed:
+                registry.increment("investigation_failures_total")
+            categories = sorted(
+                {item.kind for item in [*response.observed_evidence, *response.policy_context]}
+                | ({"ml"} if response.ml_analysis else set())
+            )
+            emit(
+                "agent",
+                "investigation_complete",
+                tools_selected=response.selected_tools,
+                tool_calls=response.tool_calls,
+                graph_steps=response.graph_steps,
+                evidence_categories=categories,
+                result_count=(
+                    len(response.observed_evidence)
+                    + len(response.policy_context)
+                    + len(response.ml_analysis)
+                ),
+                duration_ms=round((perf_counter() - started) * 1000, 3),
+                insufficient_evidence=not response.evidence_sufficiency,
+                outcome=response.outcome,
+                error_category=(
+                    ErrorCategory.tool_failure
+                    if failed
+                    else ErrorCategory.insufficient_observation
+                    if not response.evidence_sufficiency
+                    else None
+                ),
+            )
+            return response
+        except Exception:
+            registry.increment("investigation_failures_total")
+            emit(
+                "agent",
+                "investigation_complete",
+                tools_selected=[],
+                tool_calls=0,
+                graph_steps=0,
+                evidence_categories=[],
+                result_count=0,
+                duration_ms=round((perf_counter() - started) * 1000, 3),
+                outcome="failure",
+                error_category=ErrorCategory.internal_error,
+            )
+            raise
+        finally:
+            registry.observe("investigation_latency_ms", (perf_counter() - started) * 1000)
 
     def _enter(self, state: AgentState) -> tuple[bool, dict]:
         if state["steps"] >= self.max_steps:

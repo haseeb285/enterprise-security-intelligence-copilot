@@ -2,6 +2,7 @@
 
 import logging
 from contextlib import asynccontextmanager
+from time import perf_counter
 from typing import Any
 
 from fastapi import FastAPI, Request
@@ -16,6 +17,16 @@ from app.api.routes.data import router as data_router
 from app.api.routes.investigate import router as investigate_router
 from app.api.routes.knowledge import router as knowledge_router
 from app.api.schemas import HealthOut
+from app.core.observability import (
+    REQUEST_ID_HEADER,
+    ErrorCategory,
+    OperationalMetrics,
+    category_for_status,
+    configure_logging,
+    emit,
+    observability_scope,
+    safe_request_id,
+)
 from app.core.settings import Settings, get_settings
 from app.db.session import create_db_engine, make_session_factory
 from app.llm.ollama import OllamaProvider
@@ -30,6 +41,7 @@ def create_app(
     qdrant_client: Any = None,
     llm_provider: Any = None,
     rag_service: Any = None,
+    operational_metrics: OperationalMetrics | None = None,
 ) -> FastAPI:
     settings = settings or get_settings()
     if settings.demo_api_token is None or settings.demo_read_token is None:
@@ -38,11 +50,13 @@ def create_app(
     reader = settings.demo_read_token.get_secret_value()
     if len(admin) < 24 or len(reader) < 24 or admin == reader:
         raise RuntimeError("Demo tokens must be distinct and at least 24 characters")
+    configure_logging(settings.log_level)
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         engine = None
         app.state.settings = settings
+        app.state.metrics = operational_metrics or OperationalMetrics()
         if session_factory is not None:
             app.state.session_factory = session_factory
         elif settings.database_url is not None:
@@ -77,7 +91,8 @@ def create_app(
         allow_origins=settings.cors_origins,
         allow_credentials=False,
         allow_methods=["GET", "POST"],
-        allow_headers=["Authorization", "Content-Type"],
+        allow_headers=["Authorization", "Content-Type", REQUEST_ID_HEADER],
+        expose_headers=[REQUEST_ID_HEADER],
     )
 
     @app.exception_handler(RequestValidationError)
@@ -103,6 +118,37 @@ def create_app(
             if length > 8192 or len(await request.body()) > 8192:
                 return JSONResponse(status_code=413, content={"detail": "Request body too large"})
         return await call_next(request)
+
+    # Declared last so it wraps every response, including early body-size rejections.
+    @app.middleware("http")
+    async def request_observability(request: Request, call_next):
+        identifier = safe_request_id(request.headers.get(REQUEST_ID_HEADER))
+        started = perf_counter()
+        status_code = 500
+        with observability_scope(request_id_value=identifier, registry=request.app.state.metrics):
+            try:
+                response = await call_next(request)
+                status_code = response.status_code
+                response.headers[REQUEST_ID_HEADER] = identifier
+                return response
+            finally:
+                duration = (perf_counter() - started) * 1000
+                route = getattr(request.scope.get("route"), "path", "unmatched")
+                registry = request.app.state.metrics
+                registry.increment("api_requests_total")
+                registry.observe("api_request_latency_ms", duration)
+                if status_code >= 400:
+                    registry.increment("api_errors_total")
+                emit(
+                    "api",
+                    "request_complete",
+                    method=request.method,
+                    route=route,
+                    status_code=status_code,
+                    duration_ms=round(duration, 3),
+                    outcome="success" if status_code < 400 else "failure",
+                    error_category=category_for_status(status_code),
+                )
 
     @app.get(
         "/api/v1/health",
@@ -141,6 +187,27 @@ def create_app(
         except Exception:
             pass
         overall = "ready" if all(value == "ok" for value in dependencies.values()) else "degraded"
+        for dependency, state in dependencies.items():
+            if dependency == "application":
+                continue
+            emit(
+                "dependency",
+                "health_check",
+                dependency=dependency,
+                state=state,
+                outcome="success" if state == "ok" else "failure",
+                error_category=(
+                    None
+                    if state == "ok"
+                    else ErrorCategory.vector_store_unavailable
+                    if dependency == "qdrant"
+                    else ErrorCategory.llm_unavailable
+                    if dependency == "ollama"
+                    else ErrorCategory.database_unavailable
+                ),
+            )
+            if state != "ok":
+                request.app.state.metrics.increment("dependency_failures_total", label=dependency)
         return JSONResponse(
             status_code=200 if overall == "ready" else 503,
             content=HealthOut(status=overall, dependencies=dependencies).model_dump(),

@@ -8,6 +8,7 @@ from app.agent.graph import InvestigationAgent
 from app.agent.routing import validated_decisions
 from app.agent.schemas import EvidenceRecord, RoutePlan, Synthesis, ToolDecision, ToolName
 from app.agent.tools import AgentTools, ToolAccessError, ToolInputError
+from app.core.observability import OperationalMetrics, observability_scope
 from app.llm.provider import LLMMalformedOutput, LLMTimeout
 
 
@@ -125,6 +126,32 @@ def test_selective_routing(question, route, expected):
     assert len(provider.calls) == 2
     returned = result.observed_evidence + result.policy_context
     assert all(source in [item.source_id for item in returned] for source in result.sources)
+
+
+def test_investigation_records_process_metrics():
+    registry = OperationalMetrics()
+    with observability_scope(registry=registry):
+        result = InvestigationAgent(
+            ScriptedProvider(plan({"name": "get_event"})), RecordingTools()
+        ).run("Investigate event EV000001", "admin")
+    assert result.outcome == "complete"
+    snapshot = registry.snapshot()
+    assert snapshot["counters"]["investigations_total"] == 1
+    assert snapshot["latency_ms"]["investigation_latency_ms"]["count"] == 1
+
+
+def test_tool_metrics_use_only_allowlisted_names():
+    registry = OperationalMetrics()
+    tools = AgentTools(SimpleNamespace(event=lambda _event_id: None), lambda: object())
+    decision = ToolDecision(name="get_event", event_id="EV000123")
+    with observability_scope(registry=registry):
+        assert tools.run(decision, "Investigate EV000123", "reader") == []
+        with pytest.raises(ToolInputError):
+            tools.run(decision, "Investigate EV999999", "reader")
+    snapshot = registry.snapshot()
+    assert snapshot["labeled_counters"]["tool_calls_total"]["get_event"] == 2
+    assert snapshot["labeled_counters"]["tool_failures_total"]["get_event"] == 1
+    assert snapshot["labeled_latency_ms"]["tool_latency_ms"]["get_event"]["count"] == 2
 
 
 def test_invalid_model_arguments_are_rejected():
