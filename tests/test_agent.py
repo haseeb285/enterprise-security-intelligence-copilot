@@ -121,11 +121,10 @@ def test_selective_routing(question, route, expected):
     assert [name.value for name in result.selected_tools] == expected
     assert result.outcome == "complete"
     assert result.tool_calls == len(expected)
-    assert len(result.observed_evidence) == len(expected)
+    assert len(result.observed_evidence) + len(result.policy_context) == len(expected)
     assert len(provider.calls) == 2
-    assert all(
-        source in [item.source_id for item in result.observed_evidence] for source in result.sources
-    )
+    returned = result.observed_evidence + result.policy_context
+    assert all(source in [item.source_id for item in returned] for source in result.sources)
 
 
 def test_invalid_model_arguments_are_rejected():
@@ -237,8 +236,8 @@ def test_prompt_injection_is_data_and_provenance_is_application_owned():
     assert "[untrusted instruction removed]" in provider.calls[1][1]
     assert "untrusted" in provider.calls[1][2]
     assert result.sources == ["chunk-1"]
-    assert result.observed_evidence[0].citation["source"] == "sample.md"
-    assert "disable the firewall" in result.observed_evidence[0].text
+    assert result.policy_context[0].citation["source"] == "sample.md"
+    assert "disable the firewall" in result.policy_context[0].text
     assert "disable the firewall" not in result.interpretation
 
 

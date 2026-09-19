@@ -1,6 +1,7 @@
 """Validated, environment-backed settings for local development."""
 
 from functools import lru_cache
+from pathlib import Path
 from typing import Literal
 from urllib.parse import urlparse
 
@@ -29,6 +30,7 @@ class Settings(BaseSettings):
     rag_chunk_target_chars: int = Field(default=650, ge=200, le=4000)
     rag_chunk_overlap_chars: int = Field(default=80, ge=0, le=500)
     rag_top_k: int = Field(default=5, ge=1, le=10)
+    ml_model_path: Path = Path("models/anomaly/isolation_forest_daily_v1.joblib")
     database_url: SecretStr | None = None
     demo_api_token: SecretStr | None = None
     demo_read_token: SecretStr | None = None

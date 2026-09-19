@@ -4,7 +4,7 @@ import re
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.db.models import SecurityEvent, User
@@ -32,11 +32,26 @@ class InvalidAnalysisWindow(ValueError):
 
 
 class AnomalyDetectionService:
-    def __init__(self, session: Session, artifact_path: Path, *, minimum_events: int = 3):
+    def __init__(self, session: Session, artifact_path: Path, *, minimum_events: int = 2):
         self.session = session
         self.artifact_path = artifact_path
         self.minimum_events = minimum_events
         self._artifact: ModelArtifact | None = None
+
+    def default_user_window(self, user_id: str) -> tuple[datetime, datetime]:
+        """Use the user's latest active UTC day; never reach beyond available data."""
+        if not re.fullmatch(r"U\d{3}", user_id):
+            raise ValueError("user_id must match U###")
+        if self.session.scalar(select(User.user_id).where(User.user_id == user_id)) is None:
+            raise UnknownUserError(user_id)
+        latest = self.session.scalar(
+            select(func.max(SecurityEvent.timestamp)).where(SecurityEvent.user_id == user_id)
+        )
+        if latest is None:
+            raise InsufficientHistoryError("No events are available for this user")
+        latest = latest.replace(tzinfo=UTC) if latest.tzinfo is None else latest.astimezone(UTC)
+        start = latest.replace(hour=0, minute=0, second=0, microsecond=0)
+        return start, start + timedelta(days=1)
 
     def _model(self) -> ModelArtifact:
         if self._artifact is None:

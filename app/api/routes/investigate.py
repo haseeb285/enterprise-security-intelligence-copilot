@@ -12,6 +12,7 @@ from app.agent.tools import AgentTools
 from app.api.dependencies import Principal, get_api_service, get_principal
 from app.api.schemas import ErrorOut
 from app.api.services import ApiService, build_rag_service
+from app.ml.service import AnomalyDetectionService
 
 router = APIRouter(tags=["Investigation"])
 
@@ -33,9 +34,9 @@ class InvestigationIn(BaseModel):
     responses={401: {"model": ErrorOut}, 422: {"model": ErrorOut}, 503: {"model": ErrorOut}},
     summary="Investigate synthetic security evidence",
     description=(
-        "A bounded read-only LangGraph workflow selects only needed policy, event, user-event, "
-        "and incident tools. Incident evidence requires the admin role. The response separates "
-        "observed evidence from model interpretation."
+        "A bounded read-only LangGraph workflow selects only needed policy, event, incident, and "
+        "synthetic anomaly-analysis tools. Incident evidence requires the admin role. The response "
+        "separates observed facts, ML analysis, fictional policy context, and interpretation."
     ),
     dependencies=[Depends(get_principal)],
 )
@@ -50,7 +51,8 @@ def investigate(
             request.app.state.settings, request.app.state.qdrant
         )
 
-    agent = InvestigationAgent(request.app.state.llm, AgentTools(service, rag_loader))
+    anomaly = AnomalyDetectionService(service.session, request.app.state.settings.ml_model_path)
+    agent = InvestigationAgent(request.app.state.llm, AgentTools(service, rag_loader, anomaly))
     result = agent.run(body.request, principal.role)
     metadata = {
         "selected_tools": [name.value for name in result.selected_tools],

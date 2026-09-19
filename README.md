@@ -4,7 +4,7 @@ Portfolio project for a **local, synthetic** security intelligence workflow. The
 
 ## Current status
 
-Phase 7 adds a leakage-safe synthetic behavioral anomaly subsystem: UTC daily features, a chronological Isolation Forest experiment, persisted preprocessing/model artifact, reusable inference service, separate scenario evaluation, and local MLflow tracking. It is not integrated into LangGraph yet. No UI or autonomous remediation is implemented. See [the phased checklist](docs/implementation-checklist.md), [ML guide](docs/ml.md), [agent guide](docs/agent.md), and [security notes](docs/security.md).
+Phase 8 integrates the leakage-safe anomaly service into the bounded LangGraph agent. Selective routing can combine synthetic event facts, typed ML analysis, and cited fictional policy context while keeping each category separate. Partial dependency failures retain valid evidence, and the known impossible-travel model miss remains visible. No UI or autonomous remediation is implemented. See [the phased checklist](docs/implementation-checklist.md), [ML guide](docs/ml.md), [agent guide](docs/agent.md), and [security notes](docs/security.md).
 
 ## Local setup
 
@@ -61,6 +61,14 @@ For the Phase 6 synthetic development evaluation, run `.venv/bin/python -m app.a
 
 For Phase 7, run `MLFLOW_DISABLE_AGENT_HINT=1 .venv/bin/python -m app.ml.train --clean`. It trains from the synthetic PostgreSQL events, evaluates against the separate ignored scenario file, writes the selected artifact under ignored `models/`, and records two local MLflow runs under ignored `work/`. See [ML design and measured results](docs/ml.md).
 
+For the Phase 8 integrated development evaluation, keep PostgreSQL, Qdrant, native Ollama, the policy collection, and the ignored model artifact available, then run:
+
+```bash
+.venv/bin/python -m app.agent.evaluate_integrated
+```
+
+The 20-case measured run is documented in [the Phase 8 checkpoint](docs/phase-8-checkpoint.md). Results are written under ignored `work/`.
+
 `requirements-dev.lock` records the exact local Python environment, including transitive packages. Refresh it deliberately after dependency changes. `pyproject.toml` lists direct dependencies.
 
 ## Documentation
@@ -81,5 +89,6 @@ For Phase 7, run `MLFLOW_DISABLE_AGENT_HINT=1 .venv/bin/python -m app.ml.train -
 - [Phase 6 checkpoint](docs/phase-6-checkpoint.md)
 - [Synthetic anomaly model](docs/ml.md)
 - [Phase 7 checkpoint](docs/phase-7-checkpoint.md)
+- [Phase 8 checkpoint](docs/phase-8-checkpoint.md)
 
 The full architecture, workflows, measured evaluation results, and demo instructions will be documented as the corresponding components are implemented and verified.

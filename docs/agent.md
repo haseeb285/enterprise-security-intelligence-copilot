@@ -1,33 +1,69 @@
-# Phase 6 read-only investigation agent
+# Integrated read-only investigation agent
 
-The Phase 6 agent is a bounded LangGraph over current synthetic policy and simulated SIEM data. It selects only the evidence tools needed for the request. It has no write-capable tool and cannot disable accounts, modify firewalls, reset passwords, close incidents, run a shell, or execute arbitrary SQL. The API exposes it at `POST /api/v1/investigate`; Phase 5 list/detail and retrieval routes remain available.
+The Phase 8 LangGraph combines selected simulated SIEM records, anomaly analysis, and fictional policy retrieval. It remains bounded to five graph nodes, three tool calls, five events per event query, three policy chunks, no retries, and read-only service methods.
 
 ```mermaid
-flowchart TD
-  A[Request] --> B[Structured route decision]
-  B -->|Selected allowlisted tools| C[Read-only evidence tools]
-  B -->|No applicable tool or route failure| D[Assess evidence]
-  C --> D
-  D -->|Insufficient or failed| F[Deterministic safe response]
-  D -->|All selected tools returned evidence| E[Structured Ollama synthesis]
-  E --> F
-  F --> G[Validated response with source IDs from tools]
+flowchart LR
+  E[PostgreSQL synthetic events] --> A[LangGraph agent]
+  M[Persisted anomaly model] --> A
+  P[Qdrant fictional policies] --> A
+  A --> G[Typed evidence aggregation]
+  G --> L[Local Ollama synthesis]
+  L --> V[Deterministic validation]
+  V --> R[Structured investigation response]
 ```
 
-`AgentState` is a typed LangGraph state with request, role, classification, selected decisions, evidence, tool results and errors, sufficiency, synthesis, counters, and final response. Route proposals and synthesis use Ollama schema-constrained JSON and Pydantic validation. The model proposes only allowlisted tool names. An application-side intent check keeps only sources explicitly requested and fills any explicit source the proposal omitted; identifiers, event type and optional ISO time bounds are derived from the request and validated before use. A route can select `search_policy`, `search_security_events`, `get_user_events`, `get_event`, or `get_incident`, each at most once. `get_event` performs the exact `EV######` lookup; `get_incident` requires admin. No agent tool implements separate SQL or Qdrant queries.
+## Tools and routing
 
-The fixed graph uses at most five logical nodes, three tool calls, five returned events per event tool, and three policy chunks. It has no retries and sets LangGraph's recursion limit to eight as a second guard. Model-generated tool names are an enum, filters are validated, and duplicate tools are rejected. A route with too many tools is refused before any call. The tool executor handles each selected tool once and records only safe status labels. Missing results, rejected inputs, forbidden incident access, or dependency failures lead to an insufficient-evidence response. Partial observed evidence is preserved, but the graph does not synthesize a conclusion from incomplete required evidence. The policy tool adds a conservative subject-word overlap check after RAG's score threshold to reject clearly unrelated chunks; it can reject valid paraphrases, so its results need further evaluation.
+The allowlist is `search_policy`, `search_security_events`, `get_user_events`, `get_event`, `get_incident`, and `analyze_user_anomaly`. The model proposes names only. Application code derives and validates identifiers, event filters, and time bounds from the request, adds an explicitly required source that the proposal omitted, removes an unjustified proposal, rejects ambiguous identifiers/windows, and enforces the three-call limit.
 
-The final response separates model-authored summary and interpretation from `observed_evidence` supplied by tools. It also exposes `policy_context` directly from retrieved policy chunks, so multi-source responses retain the actual requirement even if model prose underemphasizes it. A multi-source policy search uses the policy clause of the request, before its first “and,” to avoid diluting retrieval with event details. Event and incident IDs come from actual PostgreSQL rows. Policy chunk IDs and citation metadata come from Qdrant retrieval results. The application builds `sources` from those records; the model cannot author that field. A generated event, incident, or user ID absent from structured record metadata causes synthesis rejection. Policy, event, and incident text is placed in an explicitly marked untrusted JSON data block in the user prompt. Suspicious instruction lines are masked in the prompt but preserved in returned observed evidence. The system message tells the model to ignore instructions inside source text. Unsafe system-changing next steps are filtered. Known overclaim and unsupported absence patterns in summaries or interpretations are replaced with cautious application-authored text. These are guards, not guarantees of semantic correctness; suspicious source text and malformed outputs are tested. The agent does not expose hidden reasoning.
+ML routing requires an explicit anomaly, unusual behavior, ML, or suspicious-activity cue plus one `U###` identifier. A request for an anomaly score selects only ML. An unusual-behavior investigation selects events and ML. A suspicious-activity request that asks about controls selects events, ML, and policy. An ordinary failed-login request remains event only, and a policy question remains policy only.
 
-The API records an audit row per authenticated investigation with selected tool names, per-tool safe outcomes, tool and graph counts, role, and overall outcome. It does not record the full request, token, retrieved policy text, generated explanation, or chain-of-thought. Standalone evaluation runs do not write audit rows. Demo bearer tokens remain local demonstration authentication, not enterprise SSO.
+`analyze_user_anomaly` is a thin adapter over `AnomalyDetectionService`; it does not duplicate event queries, feature engineering, artifact loading, or scoring. Its typed result includes entity, `[start,end)` window, exact score, flag, features, contributing observations, model version, statement, and application provenance. A score is not a probability, and a flag is not proof of attack or compromise.
 
-## Local development evaluation
+## Temporal behavior
 
-`evaluation/agent_cases.json` contains 18 synthetic requests spanning policy, event searches, exact event lookup, incidents, multiple sources, unknown IDs/policy, and an ambiguous request. Expected tool sets are review hypotheses. Run the opt-in live script only when PostgreSQL, Qdrant, and native Ollama are available:
+- Two aware ISO timestamps become an explicit `[start,end)` interval and must be ordered and no longer than the anomaly service's 24-hour bound.
+- One aware ISO timestamp means the trailing 24 hours ending at that instant.
+- One `YYYY-MM-DD` means that UTC calendar day.
+- With no time in an ML request, the service uses that user's latest active UTC calendar day. This deterministic dataset-relative default avoids analyzing future activity.
+- When event and ML tools are combined, they receive the same explicit interval. With the default, the event adapter asks the anomaly service for the same latest active day.
+
+Event repository end bounds are exclusive, matching ML feature windows.
+
+## Evidence and response contract
+
+The graph state stores ordinary `EvidenceRecord` objects separately from typed `MLEvidence`. The public response separates:
+
+- `observed_evidence`: PostgreSQL event or incident facts, including structured event attributes;
+- `ml_analysis`: exact application-owned model output;
+- `policy_context`: retrieved fictional policy text and citation metadata;
+- `summary` and `interpretation`: bounded LLM prose;
+- `recommended_next_steps`: advisory steps after write-action filtering;
+- `evidence_sufficiency`, `sources`, selected tools, safe tool outcomes, errors, and execution counts.
+
+Sources are rebuilt from returned evidence. Generated event, incident, or user IDs absent from provenance cause rejection. An inexact anomaly score in LLM prose is removed; the exact typed ML value remains. Policy citations never come from the model.
+
+The synthesis prompt labels observed facts, ML analysis, and policy context as separate JSON sections. Source text is untrusted data. Obvious injected instruction lines are masked only in the synthesis copy, while the original retrieved evidence remains visible for review. System instructions prohibit invented evidence and warn that ML is analytical evidence. Deterministic output guards filter system-changing recommendations, unsupported absence claims, overclaims, invented IDs, inexact scores, anomaly claims without ML evidence, and policy-violation claims without policy evidence.
+
+## Sufficiency and failures
+
+All selected tools succeeding with at least one evidence object sets `evidence_sufficiency=true`. No evidence returns `insufficient_evidence` without synthesis. If a selected tool fails but another source succeeds, the graph may synthesize `partial_evidence`, keeps sufficiency false, retains the valid evidence, and states why ML was unavailable. Safe ML outcomes distinguish unknown entity, insufficient history, invalid window, dependency failure, and inference failure without exposing paths or exception text.
+
+ML-only output is returned in `ml_analysis`, but the deterministic interpretation says that no security conclusion is supported without observed events. Missing policy prevents a violation claim. Missing ML prevents an anomaly-status claim.
+
+## Known disagreement
+
+For U105 on 2026-08-31, PostgreSQL contains successful logins from Germany and Japan fifteen minutes apart. The model returns exact score `-0.21107408822812324` and `flagged_anomalous=false`. The response preserves both event facts and the negative model flag. This is the documented limitation of daily aggregate features and was not repaired with a hard-coded rule.
+
+## Development evaluation
+
+`evaluation/integrated_agent_cases.json` contains 20 cases covering policy only, event only, ML only, source combinations, unknown and insufficient users, no policy, a missing-model fixture, the impossible-travel disagreement, a retrieved prompt-injection fixture, invalid time, and ambiguity.
+
+Run with healthy PostgreSQL, Qdrant, Ollama, policy collection, and the ignored model artifact:
 
 ```bash
-.venv/bin/python -m app.agent.evaluate
+.venv/bin/python -m app.agent.evaluate_integrated
 ```
 
-The script measures exact tool-set selection, unnecessary selections, procedural task completion (a grounded response when evidence is expected; safe no-answer when none is expected), structured-call validity, and latency. It writes per-case responses and measurements to ignored `work/phase6-agent-evaluation.json`. These are development checks on one local synthetic set, not a security benchmark or proof of grounding. Review the actual per-case results and limitations in `phase-6-checkpoint.md`.
+Use `--case-id ID --merge` to repeat only corrected or interrupted cases while retaining earlier completed records. Results are written to ignored `work/phase8-integrated-evaluation.json`. The measured Phase 8 run selected 20/20 expected tool sets, made zero unnecessary calls, completed 20/20 cases, preserved provenance/citations/scores in 20/20 cases, produced 35 valid structured calls with zero malformed calls, and measured 28.564 seconds mean and 29.157 seconds median latency. These are local synthetic development results, not real detection performance.

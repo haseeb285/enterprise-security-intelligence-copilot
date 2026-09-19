@@ -94,9 +94,13 @@ The clean measured run produced finished baseline run `8d3852e9157c42b282d92e6a5
 
 ## Inference service
 
-`AnomalyDetectionService.analyze_user(user_id, start, end)` is independent of FastAPI and LangGraph. It accepts an aware interval no longer than 24 hours, requires at least three events, applies the persisted pipeline, and returns the entity/window, score, flag, feature values, feature signals, and model version. It raises explicit errors for invalid users/windows, insufficient history, missing/corrupt artifacts, and incompatible schemas.
+`AnomalyDetectionService.analyze_user(user_id, start, end)` accepts an aware interval no longer than 24 hours, requires at least two events, applies the persisted pipeline, and returns the entity/window, score, flag, feature values, feature signals, and model version. Two events are enough to evaluate the retained impossible-travel example; this service availability threshold does not change the model, features, or artifact. It raises explicit errors for invalid users/windows, insufficient history, missing/corrupt artifacts, and incompatible schemas.
+
+`default_user_window(user_id)` returns the user's latest active UTC calendar day. Phase 8 uses this deterministic, dataset-relative default only when the investigation supplies no time. The LangGraph tool is a thin read-only adapter over these methods and stores the result as typed ML evidence.
 
 The live smoke for U104 on August 31 returned score `0.1316868314`, `flagged_anomalous=true`, and elevated failed-login, unusual-hour, and short-window frequency signals.
+
+The Phase 8 impossible-travel check for U105 on August 31 returned the exact score `-0.21107408822812324` and `flagged_anomalous=false`, while event evidence showed Germany and Japan logins fifteen minutes apart. Both results remain visible in the final response.
 
 ## Limitations
 

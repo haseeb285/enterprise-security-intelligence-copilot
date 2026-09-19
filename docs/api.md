@@ -1,6 +1,6 @@
 # Phase 5 API
 
-This is a local, synthetic-data FastAPI boundary over the existing PostgreSQL repository, Qdrant policy retrieval service, and Ollama health provider. It does not generate answers or expose an agent, ML, or chat endpoint.
+This is a local, synthetic-data FastAPI boundary over PostgreSQL, Qdrant policy retrieval, the persisted anomaly model, and native Ollama. It exposes the bounded investigation agent and no general chat or write endpoint.
 
 ## Run locally
 
@@ -45,6 +45,10 @@ Authenticated successful and not-found reads write an `audit_logs` record with a
 
 A one-off local smoke script used for Phase 5 is in ignored `work/phase5_smoke.py`. It generates temporary tokens in process, exercises live dependencies with FastAPI's test client, and prints only aggregate results. Ordinary automated tests use SQLite and fake Qdrant/Ollama/RAG services; they do not require network access or model downloads.
 
-## Phase 6 investigation route
+## Integrated investigation route
 
-`POST /api/v1/investigate` accepts `{"request":"..."}` with 1–4,000 nonblank characters and a reader or admin bearer token. It runs the bounded read-only LangGraph agent described in [the agent guide](agent.md). Readers can receive policy and synthetic event evidence; the incident tool is admin-only. The response includes `observed_evidence` with source IDs and policy citations, a separate application-supplied `policy_context` list, model-authored `summary` and `interpretation`, selected tools, per-tool outcomes, sufficiency, safe error labels, and graph/tool-call counts. A valid request can return HTTP 200 with `outcome=insufficient_evidence` or a failure label; callers must inspect `outcome` and `evidence_sufficiency` rather than treating 200 as proof of a finding. Invalid body and missing token use the Phase 5 422/401 behavior. An audit record stores workflow metadata without the request text or evidence content.
+`POST /api/v1/investigate` accepts `{"request":"..."}` with 1–4,000 nonblank characters and a reader or admin bearer token. It runs the bounded read-only LangGraph agent described in [the agent guide](agent.md). Readers can receive policy, synthetic event, and typed anomaly evidence; the incident tool is admin-only.
+
+The response schema exposes `summary`, `observed_evidence`, `ml_analysis`, `policy_context`, `interpretation`, `recommended_next_steps`, `evidence_sufficiency`, `sources`, selected tools, per-tool safe outcomes, safe errors, and graph/tool counts. Each ML object contains the exact floating point score and flag returned by the service, the observation window, feature values/signals, model version, demonstration statement, and provenance. A valid request may return HTTP 200 with `complete`, `partial_evidence`, `insufficient_evidence`, or another safe workflow outcome. Callers must inspect both `outcome` and `evidence_sufficiency`.
+
+Invalid body and missing token retain the 422/401 behavior. Investigation audit rows store workflow metadata without request text, evidence, ML features, prompts, or generated prose. `ML_MODEL_PATH` configures the ignored local artifact and defaults to `models/anomaly/isolation_forest_daily_v1.joblib`.

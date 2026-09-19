@@ -1,12 +1,20 @@
-"""Allowlisted read-only evidence tools backed by Phase 2/3 services."""
+"""Allowlisted read-only evidence tools backed by existing services."""
 
 import re
 from collections.abc import Callable
 from math import ceil
 
-from app.agent.schemas import EvidenceRecord, ToolDecision, ToolName
+from app.agent.routing import required_tools
+from app.agent.schemas import EvidenceRecord, MLEvidence, ToolDecision, ToolName
 from app.api.services import ApiService
 from app.db.repository import EventFilters
+from app.ml.model import IncompatibleModelArtifact, ModelArtifactError
+from app.ml.service import (
+    AnomalyDetectionService,
+    InsufficientHistoryError,
+    InvalidAnalysisWindow,
+    UnknownUserError,
+)
 from app.rag.service import RagService
 
 
@@ -18,12 +26,28 @@ class ToolAccessError(PermissionError):
     pass
 
 
+class ToolExecutionError(RuntimeError):
+    """Safe failure label for a bounded tool execution."""
+
+    def __init__(self, code: str):
+        self.code = code
+        super().__init__(code)
+
+
 class AgentTools:
-    def __init__(self, service: ApiService, rag_loader: Callable[[], RagService]):
+    def __init__(
+        self,
+        service: ApiService,
+        rag_loader: Callable[[], RagService],
+        anomaly_service: AnomalyDetectionService | None = None,
+    ):
         self.service = service
         self.rag_loader = rag_loader
+        self.anomaly_service = anomaly_service
 
-    def run(self, decision: ToolDecision, request: str, role: str) -> list[EvidenceRecord]:
+    def run(
+        self, decision: ToolDecision, request: str, role: str
+    ) -> list[EvidenceRecord | MLEvidence]:
         if decision.name == ToolName.search_security_events:
             requested_users = re.findall(r"\bU\d{3}\b", request)
             requested_incidents = re.findall(r"\bINC\d{3}\b", request)
@@ -60,13 +84,26 @@ class AgentTools:
                 for item in result.evidence[:3]
             ]
         if decision.name == ToolName.search_security_events:
+            start, end = decision.start_time, decision.end_time
+            if (
+                decision.user_id
+                and ToolName.analyze_user_anomaly in required_tools(request)
+                and start is None
+                and end is None
+                and self.anomaly_service is not None
+            ):
+                try:
+                    start, end = self.anomaly_service.default_user_window(decision.user_id)
+                except (UnknownUserError, InsufficientHistoryError):
+                    # The event query can still return its own independent evidence.
+                    pass
             filters = EventFilters(
                 user_id=decision.user_id,
                 incident_id=decision.incident_id,
                 event_type=decision.event_type,
                 severity=decision.severity.value if decision.severity else None,
-                start_time=decision.start_time,
-                end_time=decision.end_time,
+                start_time=start,
+                end_time=end,
             )
             page = self.service.events(filters, limit=decision.limit, offset=0)
             return [self._event(item) for item in page.items]
@@ -91,9 +128,48 @@ class AgentTools:
                         f"{item.title}; severity={item.severity}; status={item.status}; "
                         f"created_at={item.created_at.isoformat()}; {item.description}"
                     )[:1000],
+                    attributes={
+                        "severity": str(item.severity),
+                        "status": item.status,
+                        "created_at": item.created_at.isoformat(),
+                    },
                 )
             ]
+        if decision.name == ToolName.analyze_user_anomaly:
+            return [self._anomaly(decision)]
         raise ToolInputError("tool not allowed")
+
+    def _anomaly(self, decision: ToolDecision) -> MLEvidence:
+        if self.anomaly_service is None:
+            raise ToolExecutionError("dependency_failure")
+        try:
+            start, end = decision.start_time, decision.end_time
+            if start is None or end is None:
+                start, end = self.anomaly_service.default_user_window(decision.user_id)
+            result = self.anomaly_service.analyze_user(decision.user_id, start, end)
+        except UnknownUserError as exc:
+            raise ToolExecutionError("unknown_entity") from exc
+        except InsufficientHistoryError as exc:
+            raise ToolExecutionError("insufficient_history") from exc
+        except (InvalidAnalysisWindow, ValueError) as exc:
+            raise ToolExecutionError("invalid_window") from exc
+        except (FileNotFoundError, IncompatibleModelArtifact, ModelArtifactError) as exc:
+            raise ToolExecutionError("dependency_failure") from exc
+        except Exception as exc:
+            raise ToolExecutionError("inference_failure") from exc
+        source_id = (
+            f"ml:{result.model_version}:user:{result.entity_id}:"
+            f"{result.window_start.date().isoformat()}"
+        )
+        return MLEvidence(
+            **result.model_dump(),
+            source_id=source_id,
+            provenance={
+                "service": "app.ml.service.AnomalyDetectionService",
+                "model_version": result.model_version,
+                "data_source": "postgresql.security_events",
+            },
+        )
 
     @staticmethod
     def _policy_clause(request: str) -> str:
@@ -141,9 +217,17 @@ class AgentTools:
             "long",
             "many",
             "much",
+            "determine",
+            "whether",
+            "relevant",
+            "controls",
+            "apply",
+            "investigate",
+            "suspicious",
+            "activity",
         }
         if not words:
-            return True  # Short/non-English questions still use the RAG threshold.
+            return True
         corpus = " ".join(texts).lower()
         synonyms = {"mfa": "multifactor authentication", "vpn": "virtual private network"}
         hits = sum(word in corpus or synonyms.get(word, "\x00") in corpus for word in words)
@@ -151,6 +235,17 @@ class AgentTools:
 
     @staticmethod
     def _event(item) -> EvidenceRecord:
+        attributes = {
+            "timestamp": item.timestamp.isoformat(),
+            "user_id": item.user_id,
+            "event_type": item.event_type,
+            "severity": str(item.severity),
+            "status": item.status,
+            "source_ip": item.source_ip,
+            "device_id": getattr(item, "device_id", None),
+            "country": getattr(item, "country", None),
+            "incident_id": item.incident_id,
+        }
         return EvidenceRecord(
             kind="event",
             source_id=item.event_id,
@@ -159,7 +254,10 @@ class AgentTools:
                 f"timestamp={item.timestamp.isoformat()}; user_id={item.user_id}; "
                 f"event_type={item.event_type}; severity={item.severity}; "
                 f"status={item.status}; source_ip={item.source_ip}; "
-                f"incident_id={item.incident_id}; description={item.description}"
+                f"device_id={getattr(item, 'device_id', None)}; "
+                f"country={getattr(item, 'country', None)}; incident_id={item.incident_id}; "
+                f"description={item.description}"
             )[:1000],
             related_ids=[value for value in (item.user_id, item.incident_id) if value],
+            attributes=attributes,
         )

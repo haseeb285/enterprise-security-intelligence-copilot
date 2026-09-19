@@ -318,6 +318,10 @@ def test_investigation_api_auth_validation_and_audit(api):
     assert admin_result.json()["outcome"] == "complete"
     schema = client.get("/api/v1/openapi.json").json()
     assert schema["paths"][url]["post"]["security"] == [{"HTTPBearer": []}]
+    response_schema = schema["components"]["schemas"]["AgentResponse"]
+    assert "ml_analysis" in response_schema["properties"]
+    assert "MLEvidence" in schema["components"]["schemas"]
+    assert admin_result.json()["ml_analysis"] == []
     with factory() as session:
         logs = list(session.scalars(select(AuditLog).where(AuditLog.action == "api_investigate")))
     assert len(logs) == 2

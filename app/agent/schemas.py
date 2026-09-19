@@ -26,6 +26,7 @@ class ToolName(StrEnum):
     get_user_events = "get_user_events"
     get_incident = "get_incident"
     get_event = "get_event"
+    analyze_user_anomaly = "analyze_user_anomaly"
 
 
 class ToolDecision(BaseModel):
@@ -63,7 +64,10 @@ class ToolDecision(BaseModel):
     def consistent(self) -> "ToolDecision":
         if self.start_time and self.end_time and self.start_time > self.end_time:
             raise ValueError("start_time after end_time")
-        if self.name == ToolName.get_user_events and self.user_id is None:
+        if (
+            self.name in {ToolName.get_user_events, ToolName.analyze_user_anomaly}
+            and self.user_id is None
+        ):
             raise ValueError("get_user_events requires user_id")
         if self.name == ToolName.get_incident and self.incident_id is None:
             raise ValueError("get_incident requires incident_id")
@@ -80,12 +84,20 @@ class ToolDecision(BaseModel):
             raise ValueError("irrelevant identifier")
         if self.name == ToolName.get_incident and self.user_id:
             raise ValueError("irrelevant identifier")
-        if self.name == ToolName.get_user_events and self.incident_id:
+        if (
+            self.name in {ToolName.get_user_events, ToolName.analyze_user_anomaly}
+            and self.incident_id
+        ):
             raise ValueError("irrelevant identifier")
         if self.name != ToolName.get_event and self.event_id:
             raise ValueError("irrelevant event identifier")
         if self.name == ToolName.get_event and (self.user_id or self.incident_id):
             raise ValueError("irrelevant identifier")
+        if self.name == ToolName.analyze_user_anomaly:
+            if self.event_type or self.severity:
+                raise ValueError("irrelevant filters")
+            if bool(self.start_time) != bool(self.end_time):
+                raise ValueError("anomaly analysis requires both window bounds or neither")
         return self
 
 
@@ -117,11 +129,30 @@ class EvidenceRecord(BaseModel):
     text: str
     related_ids: list[str] = Field(default_factory=list)
     citation: dict[str, str | int | None] | None = None
+    attributes: dict[str, str | int | float | bool | None] = Field(default_factory=dict)
+
+
+class MLEvidence(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    source_id: str
+    entity_type: Literal["user", "source_ip"]
+    entity_id: str
+    window_start: datetime
+    window_end: datetime
+    anomaly_score: float
+    flagged_anomalous: bool
+    feature_values: dict[str, float]
+    contributing_observations: list[str]
+    model_version: str
+    statement: str
+    provenance: dict[str, str]
 
 
 class AgentResponse(BaseModel):
     summary: str
     observed_evidence: list[EvidenceRecord]
+    ml_analysis: list[MLEvidence]
     policy_context: list[EvidenceRecord]
     interpretation: str
     recommended_next_steps: list[str]

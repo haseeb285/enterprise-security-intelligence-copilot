@@ -69,7 +69,7 @@ def search_events(
     if filters.start_time is not None:
         conditions.append(SecurityEvent.timestamp >= _utc(filters.start_time))
     if filters.end_time is not None:
-        conditions.append(SecurityEvent.timestamp <= _utc(filters.end_time))
+        conditions.append(SecurityEvent.timestamp < _utc(filters.end_time))
     if (
         filters.start_time
         and filters.end_time
