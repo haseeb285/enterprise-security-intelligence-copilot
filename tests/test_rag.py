@@ -188,6 +188,7 @@ def test_settings_constraints():
         Settings(rag_min_score=1.1)
 
 
+@pytest.mark.qdrant_integration
 def test_live_qdrant(tmp_path):
     from qdrant_client import QdrantClient
 

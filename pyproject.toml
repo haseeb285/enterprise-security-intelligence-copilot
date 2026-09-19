@@ -39,7 +39,11 @@ include = ["app*", "frontend*"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-ra"
-markers = ["live_ollama: requires native local Ollama and the configured model"]
+markers = [
+  "live_ollama: requires native local Ollama and the configured model",
+  "postgres_integration: requires a migrated and deterministically seeded PostgreSQL database",
+  "qdrant_integration: requires a disposable live Qdrant service",
+]
 
 [tool.ruff]
 target-version = "py311"

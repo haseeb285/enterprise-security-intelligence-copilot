@@ -10,6 +10,7 @@ from app.db.repository import EventFilters, get_user_events, search_events
 from app.db.session import create_db_engine
 
 
+@pytest.mark.postgres_integration
 def test_migrated_postgres_dataset_and_queries() -> None:
     settings = Settings()
     if settings.database_url is None:

@@ -4,7 +4,7 @@ Portfolio project for a **local, synthetic** security intelligence workflow. The
 
 ## Current status
 
-Phase 12 adds ARM64 Docker images and an explicit Docker Compose bootstrap for PostgreSQL, Qdrant, FastAPI, and Streamlit while keeping Ollama native on macOS. It preserves the Phase 11 request correlation and safe JSON logs. This is a local demonstration deployment, not a production deployment. See [the local deployment guide](docs/deployment-local.md), [observability guide](docs/observability.md), and [phased checklist](docs/implementation-checklist.md).
+Phase 13 adds GitHub Actions checks for the pinned Python environment, Ruff, ordinary tests, Alembic consistency, Compose configuration, and build-only API, Streamlit, and trainer images. CI requires no native Ollama, private data, ignored model artifact, persistent developer volume, paid API, or repository secret. This is continuous integration for a local demonstration, not deployment automation. See [the CI guide](docs/ci.md), [local deployment guide](docs/deployment-local.md), and [phased checklist](docs/implementation-checklist.md).
 
 ## Local setup
 
@@ -114,6 +114,12 @@ The suite uses synthetic events, fictional policies, the local `qwen3.5:4b` mode
 
 `requirements-dev.lock` records the exact local Python environment, including transitive packages. Refresh it deliberately after dependency changes. `pyproject.toml` lists direct dependencies.
 
+## Continuous integration
+
+The workflow in `.github/workflows/ci.yml` runs on pull requests and pushes to `main`. It uses Python 3.11.13, an ephemeral PostgreSQL service, deterministic synthetic fixtures, mocked local-model behavior, Compose validation, and build-only application images. Native Ollama and live Qdrant tests are intentionally excluded. The hosted runner builds `amd64`; Phase 12 separately validated the runtime on an Apple M3 `arm64` host.
+
+No CI badge is included because this checkout has no configured GitHub remote. See [continuous integration](docs/ci.md) for the exact jobs, marker selection, supply-chain pinning, architecture boundary, and local reproduction commands.
+
 ## Documentation
 
 - [Complete requirements](docs/project-specification.md)
@@ -142,5 +148,7 @@ The suite uses synthetic events, fictional policies, the local `qwen3.5:4b` mode
 - [Phase 11 checkpoint](docs/phase-11-checkpoint.md)
 - [Local Docker Compose deployment](docs/deployment-local.md)
 - [Phase 12 checkpoint](docs/phase-12-checkpoint.md)
+- [Continuous integration](docs/ci.md)
+- [Phase 13 checkpoint](docs/phase-13-checkpoint.md)
 
 The full architecture, workflows, measured evaluation results, and demo instructions will be documented as the corresponding components are implemented and verified.
