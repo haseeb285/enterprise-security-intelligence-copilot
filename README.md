@@ -1,5 +1,7 @@
 # Enterprise Security Intelligence Copilot
 
+[![CI](https://github.com/haseeb285/enterprise-security-intelligence-copilot/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/haseeb285/enterprise-security-intelligence-copilot/actions/workflows/ci.yml)
+
 A local portfolio project that combines retrieval-augmented generation, a bounded LangGraph agent, and anomaly detection to investigate synthetic security activity. It retrieves fictional policy evidence, queries a simulated SIEM, runs a persisted Isolation Forest, and asks a local Qwen model to explain the assembled evidence without presenting generated interpretation as observed fact.
 
 The complete demonstration runs locally with open-source components. It uses synthetic telemetry and fictional policies and does not claim production SOC effectiveness.
@@ -172,7 +174,7 @@ See [local deployment](docs/deployment-local.md) for configuration, health check
 .venv/bin/ruff format --check .
 ```
 
-The Phase 14 checkpoint passed **154 tests**, with **1 live Ollama test intentionally opt-in and skipped**. PostgreSQL and Qdrant integration tests passed. GitHub Actions runs Ruff, ordinary tests with ephemeral PostgreSQL and mocked Ollama behavior, Alembic and Compose checks, and build-only application images. No hosted status badge is shown because this checkout has no configured GitHub remote.
+The Phase 14 checkpoint passed **154 tests**, with **1 live Ollama test intentionally opt-in and skipped**. PostgreSQL and Qdrant integration tests passed. GitHub Actions runs Ruff, ordinary tests with ephemeral PostgreSQL and mocked Ollama behavior, Alembic and Compose checks, and build-only application images. The first hosted three-job CI run passed on GitHub Actions.
 
 ## Project Structure
 
