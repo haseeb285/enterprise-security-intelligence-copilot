@@ -82,4 +82,4 @@ Capture only after the live stack has produced the real view. Keep browser zoom 
 3. **U105 disagreement:** Germany/Japan evidence and `flagged = false` visible together or in a clearly paired crop.
 4. **Evaluation or System Health:** use the tracked Phase 10 table or live ready dependencies and aggregate metrics.
 
-Suggested filenames are `dashboard.png`, `investigation.png`, `u105-disagreement.png`, and `evaluation-health.png` under a future `docs/images/` directory. Add only screenshots captured from this repository's real local run, then reference them from the README. No screenshots are currently committed.
+Selected screenshots from the real local run are committed under `docs/images/` and presented in the README. The U104 sequence preserves the retrieved policy context exactly as returned, and the U105 pair preserves the observed evidence and negative model flag side by side.

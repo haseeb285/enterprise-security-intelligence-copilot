@@ -24,7 +24,39 @@ Unknown identifiers, weak retrieval, missing dependencies, and ambiguous request
 
 The Streamlit application includes Dashboard, Investigation Copilot, Security Events, Knowledge Base, ML Analytics, System Health, and Audit/About views.
 
-Repository screenshots have not been fabricated or committed. The owner can add four useful captures after starting the real stack: the Dashboard, a three-source investigation, the U105 model disagreement, and Evaluation/System Health. See the [3–5 minute demo guide and screenshot checklist](docs/demo.md).
+### Application Dashboard
+
+![Security Intelligence Copilot dashboard](docs/images/dashboard.png)
+
+*The live dashboard presents 12,065 deterministic synthetic events, six incidents, system readiness, and bounded event distributions through FastAPI.*
+
+### Multi-Source AI Investigation
+
+Multi-source investigation combining structured security-event evidence, Isolation Forest analysis, retrieved policy evidence, and grounded LLM synthesis.
+
+| Structured PostgreSQL evidence | Typed Isolation Forest analysis |
+| --- | --- |
+| [![U104 structured security-event evidence](docs/images/investigation-u104-events.png)](docs/images/investigation-u104-events.png) | [![U104 typed Isolation Forest analysis](docs/images/investigation-u104-ml.png)](docs/images/investigation-u104-ml.png) |
+
+[![U104 retrieved fictional policy evidence with citations](docs/images/investigation-u104-policy.png)](docs/images/investigation-u104-policy.png)
+
+*The retrieved policy context is shown as returned by the authentic local run, including its relevance limitations.*
+
+### Evidence vs ML: Known Failure Case
+
+| Observed U105 login evidence | Application-owned ML result |
+| --- | --- |
+| [![U105 successful login events from Japan and Germany](docs/images/investigation-u105-evidence.png)](docs/images/investigation-u105-evidence.png) | [![U105 anomaly score and not-flagged model result](docs/images/investigation-u105-ml.png)](docs/images/investigation-u105-ml.png) |
+
+*Successful logins occur from Germany and Japan 15 minutes apart, while the daily Isolation Forest returns `flagged = false`. The application preserves the model result alongside the contradictory event sequence.*
+
+### System Health
+
+![Ready local dependencies and bounded process metrics](docs/images/system-health.png)
+
+*The live health view reports FastAPI, PostgreSQL, Qdrant, and native Ollama readiness with bounded admin metrics.*
+
+See the [3–5 minute demo guide and screenshot checklist](docs/demo.md).
 
 ## Architecture
 
