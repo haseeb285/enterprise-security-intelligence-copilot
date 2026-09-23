@@ -1,10 +1,10 @@
-You are the lead AI/ML Engineer and Software Engineer responsible for building a complete portfolio-grade project from end to end.
+You are the lead AI/ML Engineer and Software Engineer responsible for building a complete public technical project from end to end.
 
 PROJECT NAME
 Enterprise Security Intelligence Copilot
 
 PRIMARY GOAL
-Build a genuinely working, technically defensible, production-style AI engineering portfolio project demonstrating:
+Build a genuinely working, technically defensible, production-style AI engineering project demonstrating:
 
 - Python
 - FastAPI
@@ -31,7 +31,7 @@ Build a genuinely working, technically defensible, production-style AI engineeri
 - Security engineering principles
 - Professional software architecture
 
-This project is intended for an AI/ML Engineer / GenAI Engineer / AI Solutions Engineer / Data Scientist portfolio.
+This project is intended to demonstrate work relevant to AI/ML Engineer, GenAI Engineer, AI Solutions Engineer, and Data Scientist roles.
 
 It must NOT be a superficial chatbot or tutorial project.
 
@@ -259,7 +259,7 @@ Before implementing a major dependency, verify that it is current, maintained, c
 
 If you choose a different technology, document WHY.
 
-Do not add technologies merely for CV keywords.
+Do not add technologies merely for keyword matching.
 
 Every major technology claimed in README must actually be used.
 
@@ -1113,7 +1113,7 @@ Measure before optimizing.
 30. PROJECT INTEGRITY
 ==================================================
 
-This portfolio project must distinguish between:
+This project must distinguish between:
 
 ACTUALLY IMPLEMENTED
 software, architecture, experiments, tests

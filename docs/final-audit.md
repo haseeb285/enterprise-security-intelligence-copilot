@@ -35,12 +35,12 @@ No cosmetic matrix gap requires implementation. The only demonstration boundary 
 
 ## Claim audit
 
-Prominent README, demo, interview, security, deployment, evaluation, and specification claims were checked against source, tests, Compose, and tracked evaluation artifacts.
+Prominent README, demo, security, deployment, evaluation, and specification claims were checked against source, tests, Compose, and tracked evaluation artifacts.
 
 - Phase 10 metrics, 154-test count, model and embedding names, 384-vector dimension, six tools, seven policy files, 28 policy chunks, data counts, latency, ML results, and exact U105 score/flag are consistent.
 - The project specification remains an original requirements document; its `potential` routes and `likely` topology are not presented as implemented claims. Current documentation describes the actual implementation.
 - Phase 8 and Phase 10 latency values differ because they are clearly labeled separate measured runs, not conflicting values.
-- One real overstatement was corrected: native Ollama preserves access to macOS acceleration, but the recorded Phase 4 smoke run required CPU fallback after a Metal allocation failure. README, deployment, and interview wording now make no measured Metal-performance claim.
+- One real overstatement was corrected: native Ollama preserves access to macOS acceleration, but the recorded Phase 4 smoke run required CPU fallback after a Metal allocation failure. README and deployment wording now make no measured Metal-performance claim.
 - Phase 15's self-referential Markdown/Ruff counts now state that they were recorded before its checkpoint file was added.
 
 No evaluation result, threshold, model output, or test outcome was changed.
@@ -90,23 +90,20 @@ No screenshot was fabricated. `docs/demo.md` accurately specifies these captures
 
 Review every image for tokens, local usernames, terminal history, `.env` content, and unrelated applications before committing it.
 
-## Manual GitHub publication checklist
+## GitHub publication checklist recorded at audit time
 
-- [ ] Decide whether the existing non-noreply author mailbox may be public.
-- [ ] If it may not be public, perform and review a separate authorized history rewrite before configuring or pushing a remote.
-- [ ] Capture and review the four real screenshots; add them only if desired.
-- [ ] Create the public GitHub repository.
-- [ ] Configure the intended Git remote and verify its URL.
-- [ ] Push `main`.
-- [ ] Inspect the public file list for unexpected files and confirm `.env`, models, runtime data, and work outputs are absent.
-- [ ] Verify the first GitHub Actions run succeeds on the hosted runner.
-- [ ] Add a CI badge only after the workflow exists and passes remotely.
-- [ ] Apply the description and topics recorded in `docs/phase-15-checkpoint.md`.
-- [ ] Verify README tables, links, code blocks, and Mermaid render correctly on GitHub.
-- [ ] Open the repository in a signed-out/private browser session for a final public-view check.
+- [x] Review public exposure of the existing non-noreply author mailbox.
+- [x] Capture and review the selected real screenshots.
+- [x] Create the public GitHub repository and configure the intended remote.
+- [x] Push `main` without rewriting history.
+- [x] Inspect the public file list for unexpected files and confirm `.env`, models, runtime data, and work outputs are absent.
+- [x] Verify the first GitHub Actions run succeeds on the hosted runner.
+- [x] Add and verify the CI badge after the hosted workflow passes.
+- [x] Apply the description and topics recorded in `docs/phase-15-checkpoint.md`.
+- [x] Verify README tables, links, code blocks, images, and Mermaid rendering on GitHub.
 
 ## Known limitations and readiness decision
 
-The project remains a local synthetic demonstration with demo bearer authentication, local-model latency, relevance-gate false negatives, Isolation Forest false positives, the U105 impossible-travel miss, one generic password-policy response, no production identity/TLS/managed secrets/high availability, no hosted CI result, and no committed screenshots.
+The project remains a local synthetic demonstration with demo bearer authentication, local-model latency, relevance-gate false negatives, Isolation Forest false positives, the U105 impossible-travel miss, one generic password-policy response, and no production identity, TLS, managed secrets, or high availability. At audit time, hosted CI and reviewed screenshots were still pending; both were completed during publication.
 
-Engineering, validation, documentation, and tracked-content safety gates pass. Public release is blocked only by the owner's unresolved decision about exposing the non-noreply author mailbox. Screenshots are strongly recommended portfolio assets but are not a security or correctness blocker.
+Engineering, validation, documentation, and tracked-content safety gates pass. At the time of this audit, public release was pending review of the non-noreply author mailbox. That identity choice was subsequently reviewed, and screenshots were added before publication.

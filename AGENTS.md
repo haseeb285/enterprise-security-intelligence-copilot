@@ -1,6 +1,6 @@
 # Enterprise Security Intelligence Copilot: engineering rules
 
-Read `docs/project-specification.md` and `docs/phase-0-architecture.md` before changing architecture or scope. This repository is a local portfolio demonstration, not a deployed security product.
+Read `docs/project-specification.md` and `docs/phase-0-architecture.md` before changing architecture or scope. This repository is a local technical demonstration, not a deployed security product.
 
 ## Scope and phase gates
 

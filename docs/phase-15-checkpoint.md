@@ -1,25 +1,25 @@
-# Phase 15 checkpoint — portfolio presentation and demo polish
+# Phase 15 checkpoint — public documentation and demo polish
 
-**Scope:** Phase 15 only. The engineering implementation was already feature-complete. This phase changed documentation and presentation only: no model, threshold, feature, agent tool, API, frontend page, dependency, infrastructure, evaluation artifact, or measured result was changed.
+**Scope:** Phase 15 only. The engineering implementation was already feature-complete. This phase changed documentation only: no model, threshold, feature, agent tool, API, frontend page, dependency, infrastructure, evaluation artifact, or measured result was changed.
 
-## Portfolio page
+## Public project overview
 
-`README.md` is now the primary recruiter view. It replaces the phase-by-phase build log with:
+`README.md` is now the primary technical overview. It replaces the phase-by-phase build log with:
 
 - a short description and plain-language workflow;
-- one recruiter-friendly Mermaid architecture diagram;
+- one concise Mermaid architecture diagram;
 - concise AI/ML and engineering explanations tied to actual component purpose;
 - the tracked Phase 10 retrieval, ML, integrated-agent, grounding, and latency results;
 - the U105 impossible-travel failure and why the application preserves the disagreement;
 - an honest local bootstrap, current test result, high-level repository map, limitations, skills, and focused documentation links.
 
-No screenshot was fabricated. The README points to a four-image capture plan for the owner.
+No screenshot was fabricated. The README points to a four-image capture plan.
 
-## Demo and interview material
+## Demo material
 
-`docs/demo.md` provides a 3–5 minute story using versioned, previously evaluated requests. It moves from Dashboard to one three-source U104 investigation, reads observed/ML/policy/generated sections in order, demonstrates the U105 miss, and closes with evaluation, health, and audit. It includes seven additional evaluated questions and a screenshot checklist.
+`docs/demo.md` provides a local walkthrough using versioned, previously evaluated requests. It moves from system readiness to one three-source U104 investigation, reads observed/ML/policy/generated sections in order, demonstrates the U105 miss, and closes with evaluation, health, and audit. It includes seven additional evaluated questions and expected-behavior notes.
 
-`docs/interview-guide.md` contains a 30-second explanation, two-minute technical explanation, end-to-end request flow, technology choices, five core concepts, measured trade-offs, 13 likely interview questions with answer guidance, and one-line/two-bullet/three-bullet CV versions. It is explanatory material, not a claim of production experience.
+A separate audience-specific guide created during this phase was removed before the public documentation cleanup and is no longer tracked.
 
 ## Recommended GitHub repository metadata
 
@@ -48,11 +48,11 @@ No GitHub repository setting was changed, no remote was configured, and nothing 
 
 No code or configuration changed, so the expensive live evaluation was not repeated. Every displayed metric was copied from the tracked Phase 10 summary.
 
-## Remaining owner actions and publication considerations
+## Publication considerations recorded at phase completion
 
-- Capture the four real screenshots in `docs/demo.md` after a clean local run and add only reviewed images. Their absence is presentation work, not a functional blocker.
-- Confirm whether the non-noreply author mailbox already present in Git commit metadata is acceptable for public publication. Phase 15 did not expose its value or rewrite history.
-- Apply the suggested repository description and topics only after the repository is created or connected on GitHub.
+- Reviewed screenshots were still pending at this checkpoint and were added later without changing application behavior or measured results.
+- Public exposure of the non-noreply author mailbox was still pending review at this checkpoint and was approved before publication. No history was rewritten.
+- Repository description and topics were still pending at this checkpoint and were applied during publication.
 
 No tracked-content publication blocker was found.
 

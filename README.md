@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/haseeb285/enterprise-security-intelligence-copilot/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/haseeb285/enterprise-security-intelligence-copilot/actions/workflows/ci.yml)
 
-A local portfolio project that combines retrieval-augmented generation, a bounded LangGraph agent, and anomaly detection to investigate synthetic security activity. It retrieves fictional policy evidence, queries a simulated SIEM, runs a persisted Isolation Forest, and asks a local Qwen model to explain the assembled evidence without presenting generated interpretation as observed fact.
+A local AI security investigation system that combines retrieval-augmented generation, a bounded LangGraph agent, and anomaly detection to investigate synthetic security activity. It retrieves fictional policy evidence, queries a simulated SIEM, runs a persisted Isolation Forest, and asks a local Qwen model to explain the assembled evidence without treating generated interpretation as observed fact.
 
 The complete demonstration runs locally with open-source components. It uses synthetic telemetry and fictional policies and does not claim production SOC effectiveness.
 
@@ -58,7 +58,7 @@ Multi-source investigation combining structured security-event evidence, Isolati
 
 *The live health view reports FastAPI, PostgreSQL, Qdrant, and native Ollama readiness with bounded admin metrics.*
 
-See the [3–5 minute demo guide and screenshot checklist](docs/demo.md).
+See the [Local Demo and Validation Guide](docs/demo.md).
 
 ## Architecture
 
@@ -212,7 +212,7 @@ docs/           architecture, operations, security, evaluation, and demo guides
 
 ## Documentation
 
-- [3–5 minute demo guide](docs/demo.md)
+- [Local demo and validation guide](docs/demo.md)
 - [Architecture and environment decisions](docs/phase-0-architecture.md)
 - [API contract](docs/api.md) and [agent design](docs/agent.md)
 - [RAG](docs/rag.md), [ML](docs/ml.md), and [evaluation](docs/evaluation.md)

@@ -17,7 +17,7 @@ At every phase boundary: inspect changes, run relevant tests and Ruff, verify im
 - [x] **12 — Docker:** arm64-compatible pinned images, Compose startup, persistent volumes, host Ollama access, reproducible smoke test. See `deployment-local.md` and `phase-12-checkpoint.md`.
 - [x] **13 — CI:** GitHub Actions lint/tests/build with mocked Ollama and no private services. See `ci.md` and `phase-13-checkpoint.md`.
 - [x] **14 — Hardening:** targeted API/agent/grounding/concurrency regressions, dependency failure review, portability fix, full validation, and current/history publication scan. See `phase-14-checkpoint.md`.
-- [x] **15 — Documentation and demo:** recruiter-first README, primary architecture diagram, real 3–5 minute demo story, screenshot plan, interview/CV guide, measured results, and clear limitations. See `phase-15-checkpoint.md`.
+- [x] **15 — Documentation and demo:** public project README, primary architecture diagram, local validation guide, screenshot plan, measured results, and clear limitations. See `phase-15-checkpoint.md`.
 - [x] **16 — Final audit:** verified the implementation/test/documentation matrix and prominent claims, passed final local and stack gates, scanned current/reachable history, and recorded owner publication actions. See `final-audit.md`.
 
-**Final gate:** All 16 phases are complete. Public release remains an owner action after the author-email privacy decision and optional screenshot capture described in `final-audit.md`.
+**Final gate:** All 16 phases are complete. The author-email decision was reviewed, selected screenshots were added, and the repository was published after the final audit.

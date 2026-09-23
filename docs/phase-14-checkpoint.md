@@ -1,6 +1,6 @@
 # Phase 14 checkpoint — practical hardening
 
-**Scope:** Phase 14 only. This pass hardened existing boundaries with small tests and one grounding fix. It did not add production IAM, services, tools, models, infrastructure, frontend features, or Phase 15 presentation work. Existing RAG, LLM, ML, and integrated evaluation settings and measured results were unchanged.
+**Scope:** Phase 14 only. This pass hardened existing boundaries with small tests and one grounding fix. It did not add production IAM, services, tools, models, infrastructure, frontend features, or Phase 15 documentation work. Existing RAG, LLM, ML, and integrated evaluation settings and measured results were unchanged.
 
 ## Changes and findings
 
@@ -21,7 +21,7 @@ The current index contains 140 tracked files. The reachable Git history contains
 - no reachable `/Users/<name>/...` path;
 - only fictional policies, deterministic synthetic fixtures, documentation IP ranges, and explicitly disposable example credentials.
 
-The reachable history scan did not modify history. Git metadata contains one non-noreply author mailbox. This is normal commit identity metadata but is personal information exposed by publication; the repository owner should confirm that choice before publishing. `git fsck` also reported pre-existing unreachable objects. They are outside the reachable publication set and are not transferred by a normal branch push.
+The reachable history scan did not modify history. Git metadata contains one non-noreply author mailbox. This is normal commit identity metadata and its public exposure was reviewed before publication. `git fsck` also reported pre-existing unreachable objects. They are outside the reachable publication set and are not transferred by a normal branch push.
 
 ## Validation results
 
@@ -43,6 +43,6 @@ The suite still reports the known upstream Starlette/AnyIO deprecation warning. 
 
 Phase 14 is complete after the single logical checkpoint commit. Phase 15 has not started.
 
-## Proposed Phase 15 scope — PORTFOLIO PRESENTATION AND DEMO POLISH
+## Proposed Phase 15 scope — PUBLIC DOCUMENTATION AND DEMO POLISH
 
 Polish the README and focused topic documentation, provide a short reproducible policy and investigation walkthrough, surface the existing measured results and architecture clearly, and state limitations without changing system behavior or evaluation claims.
