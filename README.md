@@ -213,7 +213,6 @@ docs/           architecture, operations, security, evaluation, and demo guides
 ## Documentation
 
 - [3–5 minute demo guide](docs/demo.md)
-- [Interview and CV guide](docs/interview-guide.md)
 - [Architecture and environment decisions](docs/phase-0-architecture.md)
 - [API contract](docs/api.md) and [agent design](docs/agent.md)
 - [RAG](docs/rag.md), [ML](docs/ml.md), and [evaluation](docs/evaluation.md)
