@@ -48,7 +48,7 @@ flowchart TB
     API --> UI
 ```
 
-Streamlit communicates only with FastAPI. Docker Compose runs Streamlit, FastAPI, PostgreSQL, and Qdrant; Ollama stays native on macOS so the model can use Apple acceleration.
+Streamlit communicates only with FastAPI. Docker Compose runs Streamlit, FastAPI, PostgreSQL, and Qdrant; FastAPI reaches native macOS Ollama through `host.docker.internal`. The recorded Phase 4 smoke run required CPU fallback after a Metal allocation failure, so this project does not claim measured Metal performance.
 
 ## AI / ML Engineering
 

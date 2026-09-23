@@ -37,10 +37,10 @@ No GitHub repository setting was changed, no remote was configured, and nothing 
 
 - Complete ordinary suite: **154 passed, 1 skipped** in 4.76 seconds. The skip is the deliberately opt-in native Ollama test.
 - Ruff lint: passed.
-- Ruff format check: all **116** discovered source/document files passed.
+- Ruff format check before this checkpoint file was added: all **116** discovered source/document files passed. The committed Phase 15 tree contains one additional Markdown file.
 - `pip check`: no broken requirements.
 - Compose bootstrap profile: valid with disposable local values.
-- Documentation check: 35 Markdown files, 33 Markdown links inspected, no missing local target, balanced code fences.
+- Documentation check before this checkpoint file was added: 35 Markdown files and 33 Markdown links inspected, with no missing local target and balanced code fences. The committed Phase 15 tree contains 36 Markdown files.
 - README Mermaid check: exactly one `flowchart TB` block with balanced delimiters and all primary components present.
 - Current tracked publication scan: no suspicious artifact paths, tracked-but-ignored files, private keys, or high-confidence AWS, GitHub, OpenAI, or Slack credentials.
 - Machine-path scan: no tracked developer-specific macOS home path. The Phase 0 environment inventory retains the inspected `/opt/anaconda3/...` interpreter path as historical evidence; portable instructions use `python3.11`.

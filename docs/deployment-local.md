@@ -1,6 +1,6 @@
 # Local demonstration deployment with Docker Compose
 
-This is a **local demonstration deployment** for an Apple silicon Mac with 16 GB unified memory. It is not a production deployment. Docker Compose runs PostgreSQL, Qdrant, FastAPI, and Streamlit. Ollama stays native on macOS so `qwen3.5:4b` can use Apple acceleration.
+This is a **local demonstration deployment** for an Apple silicon Mac with 16 GB unified memory. It is not a production deployment. Docker Compose runs PostgreSQL, Qdrant, FastAPI, and Streamlit. Ollama stays native on macOS and FastAPI reaches it through `host.docker.internal`. The recorded Phase 4 smoke run required CPU fallback after a Metal allocation failure, so no measured Metal performance is claimed.
 
 ```text
 Browser -> Streamlit container -> FastAPI container

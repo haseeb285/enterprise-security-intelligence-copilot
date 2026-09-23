@@ -40,7 +40,7 @@ Evidence is serialized into separate observed, ML, and policy sections for local
 | Isolation Forest | An unsupervised baseline fits the lack of realistic labeled security data and produces rankable anomaly scores. It also exposes useful limitations that can be evaluated honestly. |
 | MLflow | Local run tracking records parameters, metrics, and artifacts for the two training configurations without requiring a hosted platform. |
 | Docker Compose | Reproduces service topology, migrations, seed/ingest/train bootstrap jobs, volumes, health checks, and container security settings. |
-| Native Ollama | Keeps inference local, avoids paid APIs, preserves the provider boundary, and uses Apple acceleration more effectively than the initial container path. |
+| Native Ollama | Keeps inference local, avoids paid APIs, preserves the provider boundary, and leaves the runtime outside Compose. Native execution can access Apple acceleration, but the recorded Phase 4 smoke run required CPU fallback and did not measure Metal performance. |
 
 ## Five concepts to understand well
 
@@ -103,7 +103,7 @@ The evaluation separates retrieval, structured generation, routing, integrated b
    Pydantic and deterministic checks measure schemas, facts, provenance, sources, scores, flags, tool choices, and insufficiency. A small explicit manual rubric reviews factual support and directness.
 
 10. **Why keep Ollama outside Docker?**
-    Native Ollama uses Apple acceleration on the target M3 and avoids duplicating a large model runtime in the Compose stack. FastAPI reaches it through `host.docker.internal`.
+    It avoids duplicating a large model runtime in Compose, keeps provider configuration simple, and preserves access to native macOS acceleration. FastAPI reaches it through `host.docker.internal`. The recorded smoke run used CPU fallback, so I do not claim measured Metal performance.
 
 11. **What would change for production?**
     Replace demo tokens with OIDC and managed RBAC, add TLS and managed secrets, review private-corpus access, centralize durable audit/telemetry, add rate limits and threat modeling, and evaluate with representative approved data.
